@@ -1,0 +1,12 @@
+services:
+  video-studio:
+    build: .
+    env_file: .env
+    environment:
+      HOST: 0.0.0.0
+      DATA_DIR: /app/data
+    ports:
+      - "127.0.0.1:3001:3001"
+    volumes:
+      - ./data:/app/data
+    restart: unless-stopped

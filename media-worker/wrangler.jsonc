@@ -1,0 +1,16 @@
+{
+  "$schema": "../node_modules/wrangler/config-schema.json",
+  "name": "video-studio-media",
+  "main": "src/index.js",
+  "compatibility_date": "2026-09-09",
+  "workers_dev": true,
+  "observability": {
+    "enabled": true,
+    "head_sampling_rate": 0.1
+  },
+  "kv_namespaces": [
+    {
+      "binding": "MEDIA"
+    }
+  ]
+}

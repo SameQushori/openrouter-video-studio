@@ -1,0 +1,95 @@
+Analyze the supplied video as a source of truth and return one valid JSON object only. Do not use markdown or code fences. The result will be used both as a high-accuracy transcript and to recreate the clip with Wan and MiniMax H3.
+
+Accuracy rules:
+- Inspect the complete video from beginning to end. Work internally in multiple passes: first audio/transcription, then shots and motion, then camera/lighting, then consistency verification.
+- Transcribe every spoken word verbatim in the original language. Never guess an unclear word. Write "[inaudible]" and lower confidence instead.
+- Use millisecond timestamps (HH:MM:SS.mmm) for speech and visible events. Separate overlapping speakers. Include off-screen speech and non-verbal vocalizations.
+- Keep verbatim_text exactly as heard. Put punctuation/obvious formatting corrections only in normalized_text. Do not translate unless filling translation_en.
+- Use stable speaker IDs S1, S2, etc. Describe a speaker only from visible or audible evidence. Do not infer names, age, ethnicity, relationships, location, brand, device, or intent.
+- The main subject will be supplied separately as a reference image. Do not describe the main subject's face, skin tone, hair, body shape, or other identity traits. Clothing, accessories, footwear, pose, expression, gaze, and movement may be described.
+- Record uncertainty explicitly. Never turn an assumption into a fact.
+- Describe only details that affect reconstruction. Distinguish camera movement from subject movement.
+
+Generator adaptation rules:
+- Wan image-to-video: the supplied first frame defines subject, scene, composition, and visual style. The Wan prompt should focus on observable motion, its speed and amplitude, expression, camera movement, timing, dialogue, and sound. For a continuous clip begin with "Generate single shot." For real cuts, use Shot N with time ranges. Refer to uploaded assets as "Image 1" and "Video 1" when needed. Write "No dialogue." and "No background music." when absent. Keep wan.negative_prompt concise and under 500 characters.
+- MiniMax H3 image-to-video: begin exactly with "For the target video, at 0.00 seconds into the target video, <Picture 1> (from [Shot 1]) is fully referenced." Then use the fields integrated_multimodal_description, overall_soundscape, and non_diegetic_music. Describe the timeline in playback order and preserve the image's identity, clothing, colors, objects, and spatial relations.
+- MiniMax H3 full-reference/motion mode: define <Subject 1> as appearance from <Picture 1> and motion/performance from <Video 1>. Use the six sections subject_definitions, summary, retention_analysis, detailed_description, overall_soundscape, and non_diegetic_music. The video reference supplies motion, facial performance, rhythm, camera behavior, and timing only; appearance and scene come from Picture 1.
+- All generator prompts must be in English, except verbatim dialogue/lyrics. Do not add actions, sounds, dialogue, camera moves, or imperfections that are absent from the source.
+
+Return exactly this schema. Use JSON null, never the string "null":
+{
+  "source": {
+    "duration_seconds": 0.0,
+    "aspect_ratio": "",
+    "orientation": "vertical|horizontal|square",
+    "fps_estimate": null,
+    "shot_count": 0,
+    "continuous_single_shot": true,
+    "overall_style": ""
+  },
+  "speakers": [
+    {
+      "id": "S1",
+      "role": "main subject|other visible person|off-screen voice|unknown",
+      "appearance": "do not describe — reference image will be provided",
+      "wardrobe": "",
+      "voice": "observable tone, pitch range, pace and accent; no identity inference"
+    }
+  ],
+  "transcript": [
+    {
+      "start": "00:00:00.000",
+      "end": "00:00:00.000",
+      "speaker": "S1",
+      "verbatim_text": "",
+      "normalized_text": "",
+      "language": "",
+      "translation_en": null,
+      "delivery": "",
+      "confidence": 1.0,
+      "audio_notes": null
+    }
+  ],
+  "timeline": [
+    {
+      "start": "00:00:00.000",
+      "end": "00:00:00.000",
+      "shot": 1,
+      "framing": "",
+      "subject_action": "",
+      "expression_and_gaze": "",
+      "camera_behavior": "",
+      "background_activity": "",
+      "visible_text": null,
+      "dialogue_refs": [],
+      "sound_events": []
+    }
+  ],
+  "scene": {
+    "environment": "",
+    "lighting": "",
+    "color_profile": "",
+    "background": "",
+    "camera_logic": "",
+    "pacing": "",
+    "phone_camera_artifacts": []
+  },
+  "uncertainties": [
+    {
+      "time": "00:00:00.000",
+      "field": "",
+      "reason": "",
+      "alternatives": []
+    }
+  ],
+  "generation_prompts": {
+    "wan": {
+      "prompt": "",
+      "negative_prompt": ""
+    },
+    "minimax_h3": {
+      "image_to_video_prompt": "",
+      "full_reference_motion_prompt": ""
+    }
+  }
+}

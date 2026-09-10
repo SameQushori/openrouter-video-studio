@@ -1,0 +1,12 @@
+node_modules
+dist
+data
+.studio-backups
+.env
+.env.*
+!.env.example
+.git
+.wrangler
+media-worker/wrangler.user.jsonc
+tools/yt-dlp.exe
+*.log

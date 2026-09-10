@@ -1,0 +1,50 @@
+{
+  "bytedance/seedance-2.0-fast": {
+    "references": ["image", "video"],
+    "maxReferences": 4,
+    "motionControl": "video_reference",
+    "source": "https://openrouter.ai/docs/cookbook/video-generation/reference-to-video",
+    "note": "Video references require a supporting provider, including BytePlus generation 2+. Confirm routing before paid use.",
+    "videoSource": "https://openrouter.ai/docs/api/api-reference/video-generation/submit-a-video-generation-request"
+  },
+  "bytedance/seedance-2.0": {
+    "references": ["image", "video"],
+    "maxReferences": 4,
+    "motionControl": "video_reference",
+    "source": "https://openrouter.ai/docs/api/api-reference/video-generation/create-videos",
+    "note": "OpenRouter documents video references for supporting providers, including BytePlus Seedance 2.0."
+  },
+  "bytedance/seedance-2.0-mini": {
+    "references": ["image", "video"],
+    "maxReferences": 4,
+    "motionControl": "video_reference",
+    "source": "https://openrouter.ai/bytedance/seedance-2.0-mini",
+    "note": "The model page lists multimodal reference-to-video with image, video, and audio inputs."
+  },
+  "alibaba/wan-2.7": {
+    "references": ["image"],
+    "maxReferences": 4,
+    "source": "https://openrouter.ai/docs/guides/overview/multimodal/video-generation"
+  },
+  "alibaba/wan-3.0": {
+    "references": ["image"],
+    "maxReferences": 4,
+    "source": "https://openrouter.ai/alibaba/wan-3.0",
+    "note": "OpenRouter lists Wan 3.0 as supporting reference-guided video generation. Studio accepts up to four image references per job."
+  },
+  "bytedance/seedance-2.5": {
+    "references": ["image", "video"],
+    "maxReferences": 4,
+    "motionControl": "video_reference",
+    "source": "https://openrouter.ai/bytedance/seedance-2.5",
+    "note": "The model page lists up to 50 image, video, and audio reference assets. Studio currently submits up to four image/video references."
+  },
+  "minimax/hailuo-3": {
+    "references": ["image", "video"],
+    "maxReferences": 4,
+    "motionControl": "video_to_video",
+    "source": "https://openrouter.ai/minimax/hailuo-3",
+    "note": "OpenRouter explicitly lists video-to-video motion transfer for MiniMax H3."
+  },
+  "demo/studio": { "references": ["image", "video"], "source": "demo" }
+}

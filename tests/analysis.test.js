@@ -1,0 +1,48 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtempSync,rmSync,writeFileSync} from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import request from 'supertest';
+import {createStore} from '../server/store.js';
+import {createApp} from '../server/app.js';
+import {selectGeminiModels,analysisResult,analysisPayload} from '../server/analysis.js';
+import {tiktokUrl} from '../server/tiktok.js';
+const model={id:'google/gemini-test',name:'Gemini',architecture:{input_modalities:['video'],output_modalities:['text']},supported_parameters:['response_format','reasoning'],pricing:{prompt:'0.000002',completion:'0.000012'}};
+test('Gemini discovery excludes generation, non-video and batch models',()=>{assert.equal(selectGeminiModels([model,{...model,id:'google/gemini-test:batch'},{...model,id:'other/model'},{...model,architecture:{}}]).length,1);});
+test('invalid/truncated JSON is preserved with usage without automatic retry',()=>{const b=analysisResult({choices:[{message:{content:'{"unfinished":'},finish_reason:'length'}],usage:{cost:.02}});assert.equal(b.jsonValid,false);assert.equal(b.usage.cost,.02);assert.match(b.warning,/обрезан/);});
+test('maximum analysis quality requests a larger deterministic response',async t=>{
+ const dir=mkdtempSync(path.join(os.tmpdir(),'studio-analysis-quality-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const id='11111111-1111-4111-8111-111111111111';
+ writeFileSync(path.join(dir,`${id}.mp4`),'video');
+ writeFileSync(path.join(dir,`${id}.json`),JSON.stringify({kind:'video',mime:'video/mp4',file:`${id}.mp4`}));
+ const payload=await analysisPayload({prompt:'Return JSON',assetId:id,quality:'max'},{...model,supported:model.supported_parameters},dir);
+ assert.equal(payload.max_tokens,12000);assert.equal(payload.reasoning.effort,'high');
+});
+test('analysis uploads privately in request, persists result and deduplicates',async t=>{
+ const dir=mkdtempSync(path.join(os.tmpdir(),'studio-analysis-')),store=createStore(dir);let calls=0,body;
+ const provider={analysisModels:async()=>[model],analyze:async p=>{calls++;body=p;return {choices:[{message:{content:'{"scene_events":[]}'},finish_reason:'stop'}],usage:{cost:.02,prompt_tokens:1500,completion_tokens:1000}};}};
+ const runtime=createApp({provider,store,assetDir:path.join(dir,'uploads')});
+ t.after(()=>{runtime.close();store.close();rmSync(dir,{recursive:true,force:true});});
+ const uploaded=await request(runtime.app).post('/api/uploads').attach('file',Buffer.concat([Buffer.from([0,0,0,20]),Buffer.from('ftypisom000000000')]),'clip.mp4');assert.equal(uploaded.status,201);
+ const catalog=await request(runtime.app).get('/api/analysis/models');assert.equal(catalog.body.data[0].id,model.id);
+ const send=()=>request(runtime.app).post('/api/analysis/jobs').set('Idempotency-Key','analysis-test-123').send({model:model.id,prompt:'Return JSON',assetId:uploaded.body.id});
+ assert.equal((await send()).status,202);await send();
+ for(let i=0;i<20&&store.get('analysis-test-123').status==='analyzing';i++)await new Promise(r=>setTimeout(r,10));
+ assert.equal(calls,1);assert.match(body.messages[0].content[0].video_url.url,/^data:video\/mp4;base64,/);assert.equal(body.response_format.type,'json_object');assert.equal(body.max_tokens,8192);
+ const history=await request(runtime.app).get('/api/analysis/jobs');assert.equal(history.body.data[0].jsonValid,true);assert.equal(history.body.data[0].usage.cost,.02);assert.ok(!JSON.stringify(history.body).includes('base64'));
+ assert.equal((await request(runtime.app).get('/api/jobs')).body.data.length,0);
+ assert.equal((await request(runtime.app).post('/api/analysis/jobs').set('Idempotency-Key','invalid-analysis').send({model:model.id,prompt:'test',assetId:'../secret'})).status,400);
+});
+test('TikTok import accepts only TikTok, stores one MP4 and serves a download',async t=>{
+ const dir=mkdtempSync(path.join(os.tmpdir(),'studio-tiktok-')),store=createStore(dir);let calls=0;
+ const mp4=Buffer.concat([Buffer.from([0,0,0,20]),Buffer.from('ftypisom000000000')]);
+ const runtime=createApp({provider:{},store,assetDir:path.join(dir,'uploads'),tiktokDownloader:async url=>{calls++;assert.equal(url,'https://vm.tiktok.com/example/');return {buffer:mp4,name:'clip.mp4'};}});
+ t.after(()=>{runtime.close();store.close();rmSync(dir,{recursive:true,force:true});});
+ assert.throws(()=>tiktokUrl('https://example.com/video'),{status:400});
+ const imported=await request(runtime.app).post('/api/tiktok/import').send({url:'https://vm.tiktok.com/example/'});
+ assert.equal(imported.status,201);assert.equal(imported.body.kind,'video');assert.equal(calls,1);
+ const downloaded=await request(runtime.app).get(`/api/tiktok/assets/${imported.body.id}/download`);
+ assert.equal(downloaded.status,200);assert.match(downloaded.headers['content-disposition'],/tiktok-video\.mp4/);assert.deepEqual(downloaded.body,mp4);
+ assert.equal((await request(runtime.app).get('/api/tiktok/assets/00000000-0000-0000-0000-000000000000/download')).status,404);
+});

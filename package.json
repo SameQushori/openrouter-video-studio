@@ -1,0 +1,40 @@
+{
+  "name": "openrouter-video-studio",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.13"
+  },
+  "scripts": {
+    "dev": "concurrently -k -n api,web \"node --watch server/index.js\" \"vite --host 127.0.0.1\"",
+    "build": "vite build --configLoader runner",
+    "setup": "node scripts/setup.mjs",
+    "setup:worker": "node scripts/setup-worker.mjs",
+    "backup": "node scripts/backup.mjs",
+    "doctor": "node scripts/doctor.mjs",
+    "serve": "node server/index.js",
+    "start": "node scripts/start.mjs",
+    "test": "node --test tests/*.test.js",
+    "check:public": "node scripts/check-public.mjs",
+    "check": "npm test && npm run build && npm run doctor -- --ci && npm run check:public"
+  },
+  "dependencies": {
+    "dotenv": "^17.2.0",
+    "exiftool-vendored": "^38.0.0",
+    "express": "^5.1.0",
+    "ffmpeg-static": "^5.3.0",
+    "multer": "^2.0.2",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "undici": "^8.10.2"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.0.0",
+    "concurrently": "^9.2.0",
+    "prettier": "^3.9.6",
+    "supertest": "^7.1.4",
+    "vite": "^7.1.0",
+    "wrangler": "^4.131.0"
+  }
+}

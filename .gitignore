@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.wrangler/
+.env
+.env.*
+!.env.example
+data/
+.studio-backups/
+*.log
+tools/yt-dlp.exe
+media-worker/.dev.vars
+media-worker/wrangler.user.jsonc
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
