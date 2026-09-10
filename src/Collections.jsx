@@ -3,7 +3,7 @@ async function api(url, options) {
   const r = await fetch(url, options);
   if (r.status === 204) return null;
   const b = await r.json();
-  if (!r.ok) throw new Error(b.error || "Ошибка запроса");
+  if (!r.ok) throw new Error(b.error || "Request failed");
   return b;
 }
 export function Collections() {
@@ -36,7 +36,7 @@ export function Collections() {
     return () => window.removeEventListener("beforeunload", warn);
   }, [dirty]);
   function select(item) {
-    if (dirty && !window.confirm("Перейти без сохранения изменений?")) return;
+    if (dirty && !window.confirm("Leave without saving your changes?")) return;
     setId(item?.id || null);
     setTitle(item?.title || "");
     setContent(item?.content || "");
@@ -57,7 +57,7 @@ export function Collections() {
       });
       setId(p.id);
       setDirty(false);
-      setMessage("Сохранено");
+      setMessage("Saved");
       await load();
     } catch (e) {
       setError(e.message);
@@ -66,7 +66,7 @@ export function Collections() {
     }
   }
   async function remove() {
-    if (!window.confirm(`Удалить «${title}» из коллекции?`)) return;
+    if (!window.confirm(`Delete “${title}” from the collection?`)) return;
     setBusy(true);
     try {
       await api(`/api/collections/${id}`, { method: "DELETE" });
@@ -74,7 +74,7 @@ export function Collections() {
       setTitle("");
       setContent("");
       setDirty(false);
-      setMessage("Удалено");
+      setMessage("Deleted");
       await load();
     } catch (e) {
       setError(e.message);
@@ -86,19 +86,19 @@ export function Collections() {
     <div className="workspace">
       <section>
         <div className="sectionTitle">
-          <h2>Коллекции</h2>
-          <span>{items.length} промптов</span>
+          <h2>Collections</h2>
+          <span>{items.length} prompts</span>
         </div>
         <button
           className="primary"
           disabled={busy}
           onClick={() => select(null)}
         >
-          + Новый промпт
+          + New prompt
         </button>
         <p className="hint">
-          Личная библиотека. Сохраняется на компьютере и доступна в обычном и
-          деморежиме.
+          Your private prompt library. It is stored on this computer and
+          available in both live and demo modes.
         </p>
         <div className="collectionList">
           {items.map((p) => (
@@ -117,11 +117,11 @@ export function Collections() {
         </div>
       </section>
       <section>
-        <h2>{id ? "Редактировать промпт" : "Новый промпт"}</h2>
+        <h2>{id ? "Edit prompt" : "New prompt"}</h2>
         <form onSubmit={save}>
           <fieldset disabled={busy} className="inputs">
             <label>
-              Название
+              Title
               <input
                 value={title}
                 maxLength={160}
@@ -134,7 +134,7 @@ export function Collections() {
               />
             </label>
             <label>
-              Содержание
+              Content
               <textarea
                 rows={18}
                 value={content}
@@ -145,14 +145,14 @@ export function Collections() {
                   setDirty(true);
                   setMessage("");
                 }}
-                placeholder="Ваш промпт…"
+                placeholder="Your prompt…"
               />
             </label>
             <button
               className="primary"
               disabled={!title.trim() || !content.trim()}
             >
-              {busy ? "Сохраняется…" : "Сохранить"}
+              {busy ? "Saving…" : "Save"}
             </button>
             <div className="promptToolbar">
               <button
@@ -161,24 +161,24 @@ export function Collections() {
                 onClick={async () => {
                   try {
                     await navigator.clipboard.writeText(content);
-                    setMessage("Скопировано");
+                    setMessage("Copied");
                   } catch {
-                    setError("Выделите и скопируйте текст вручную.");
+                    setError("Select and copy the text manually.");
                   }
                 }}
               >
-                Копировать
+                Copy
               </button>
               {id && (
                 <button type="button" onClick={remove}>
-                  Удалить
+                  Delete
                 </button>
               )}
             </div>
           </fieldset>
         </form>
         <p className="hint" role="status">
-          {dirty ? "Есть несохранённые изменения" : message}
+          {dirty ? "You have unsaved changes" : message}
         </p>
         {error && (
           <p className="error" role="alert">

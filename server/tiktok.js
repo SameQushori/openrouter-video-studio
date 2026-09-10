@@ -12,7 +12,7 @@ export function tiktokUrl(value) {
   try {
     url = new URL(value);
   } catch {
-    throw bad("Вставьте ссылку на видео TikTok.");
+    throw bad("Paste a TikTok video URL.");
   }
   const host = url.hostname.toLowerCase().replace(/^www\./, "");
   if (
@@ -21,7 +21,7 @@ export function tiktokUrl(value) {
     url.password ||
     !(host === "tiktok.com" || host.endsWith(".tiktok.com"))
   )
-    throw bad("Разрешены только публичные HTTPS-ссылки TikTok.");
+    throw bad("Only public TikTok HTTPS URLs are allowed.");
   return url.href;
 }
 
@@ -54,14 +54,14 @@ export function createTikTokDownloader({
       const file = (await readdir(dir)).find((name) => name.endsWith(".mp4"));
       if (!file)
         throw bad(
-          "TikTok не отдал MP4. Возможно, видео приватное, удалено или ограничено по региону.",
+          "TikTok did not return an MP4. The video may be private, deleted, or region-restricted.",
         );
       const source = path.join(dir, file);
       const normalized = path.join(dir, "normalized.mp4");
       await normalize(ffmpeg, source, normalized);
       const buffer = await readFile(normalized);
       if (buffer.length > 25 * 1024 * 1024)
-        throw bad("Видео больше 25 МБ. Выберите более короткий ролик.");
+        throw bad("The video is larger than 25 MB. Choose a shorter clip.");
       return { buffer, name: "tiktok-video.mp4", sourceUrl: url };
     } finally {
       await rm(dir, { recursive: true, force: true });
@@ -71,7 +71,7 @@ export function createTikTokDownloader({
 
 export async function normalizeH264(binary, input, output) {
   if (!binary)
-    throw bad("Видеоконвертер не установлен. Выполните npm install.", 503);
+    throw bad("The video converter is not installed. Run npm install.", 503);
   await runProcess(binary, [
     "-y",
     "-i",
@@ -115,7 +115,7 @@ function runProcess(binary, args) {
       clearTimeout(timer);
       reject(
         error.code === "ENOENT"
-          ? bad("Загрузчик TikTok не установлен. Запустите setup.ps1.", 503)
+          ? bad("The TikTok downloader is not installed. Run setup-tiktok.ps1.", 503)
           : error,
       );
     });
@@ -128,9 +128,9 @@ function runProcess(binary, args) {
       reject(
         bad(
           signal
-            ? "TikTok не ответил за 2 минуты. Повторите позже."
+            ? "TikTok did not respond within two minutes. Try again later."
             : detail?.replace(/^ERROR:\s*/, "") ||
-                "Не удалось скачать видео TikTok. Проверьте, что ролик публичный.",
+                "Could not download the TikTok video. Make sure it is public.",
           code === 127 ? 503 : 400,
         ),
       );
@@ -147,16 +147,16 @@ export function installTikTok(app, { assets, downloader }) {
     res.status(201).json(asset);
   });
   app.get("/api/tiktok/assets/:id/download", async (req, res) => {
-    if (!/^[a-f0-9-]{36}$/.test(req.params.id)) throw bad("Файл не найден.");
+    if (!/^[a-f0-9-]{36}$/.test(req.params.id)) throw bad("File not found.");
     const metadataPath = path.join(assets.root, `${req.params.id}.json`);
     let metadata;
     try {
       metadata = JSON.parse(await readFile(metadataPath, "utf8"));
     } catch {
-      throw bad("Файл не найден.", 404);
+      throw bad("File not found.", 404);
     }
     if (metadata.source !== "tiktok" || metadata.file !== `${req.params.id}.mp4`)
-      throw bad("Файл не найден.", 404);
+      throw bad("File not found.", 404);
     res.download(path.join(assets.root, metadata.file), "tiktok-video.mp4");
   });
 }

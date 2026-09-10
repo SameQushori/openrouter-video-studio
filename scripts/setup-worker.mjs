@@ -14,7 +14,7 @@ async function ensureEnv() {
   try {
     await access(path.join(root, ".env"), constants.F_OK);
   } catch {
-    throw new Error("Сначала выполните npm run setup.");
+    throw new Error("Run npm run setup first.");
   }
 }
 
@@ -26,12 +26,12 @@ function run(args, options = {}) {
     input: options.input,
   });
   const output = `${result.stdout || ""}\n${result.stderr || ""}`;
-  if (result.status !== 0) throw new Error(output.trim() || "Wrangler завершился с ошибкой.");
+  if (result.status !== 0) throw new Error(output.trim() || "Wrangler exited with an error.");
   return output;
 }
 
 await ensureEnv();
-console.log("Проверяю вход в Cloudflare…");
+console.log("Checking Cloudflare authentication…");
 try {
   const identity = run(["whoami"]);
   if (/not authenticated|not logged in/i.test(identity)) throw new Error("login required");
@@ -40,13 +40,13 @@ try {
     cwd: workerDir,
     stdio: "inherit",
   });
-  if (login.status !== 0) throw new Error("Не удалось войти в Cloudflare.");
+  if (login.status !== 0) throw new Error("Could not sign in to Cloudflare.");
 }
 
-console.log("Разворачиваю Media Worker…");
+console.log("Deploying the Media Worker…");
 const deployOutput = run(["deploy", "--config", "wrangler.jsonc"]);
 const workerUrl = deployOutput.match(/https:\/\/[a-z0-9.-]+\.workers\.dev/i)?.[0];
-if (!workerUrl) throw new Error("Worker развёрнут, но публичный URL не найден в ответе Wrangler.");
+if (!workerUrl) throw new Error("The Worker was deployed, but Wrangler did not return a public URL.");
 
 const token = randomBytes(32).toString("hex");
 const secretDir = path.join(root, "data", "runtime");
@@ -75,10 +75,10 @@ for (let attempt = 0; attempt < 20; attempt += 1) {
   await new Promise((resolve) => setTimeout(resolve, 1000));
 }
 if (!healthy)
-  throw new Error("Worker развёрнут, но проверка /health не прошла. Повторите настройку позже.");
+  throw new Error("The Worker was deployed, but the /health check failed. Try setup again later.");
 await updateEnv(path.join(root, ".env"), {
   MEDIA_WORKER_URL: workerUrl,
   MEDIA_WORKER_TOKEN: token,
 });
-console.log(`Media Worker готов: ${workerUrl}`);
-console.log("Адрес и секрет сохранены только в локальном .env. Перезапустите Video Studio.");
+console.log(`Media Worker is ready: ${workerUrl}`);
+console.log("The URL and secret were saved only in the local .env. Restart Video Studio.");

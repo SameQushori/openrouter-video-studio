@@ -27,7 +27,7 @@ if (!(await exists(envPath))) {
   if (setup.status !== 0) process.exit(setup.status || 1);
 }
 if (!(await exists(path.join(root, "dist", "index.html")))) {
-  console.log("Собираю интерфейс…");
+  console.log("Building the interface…");
   const build = spawnSync(npm, ["run", "build"], { cwd: root, stdio: "inherit" });
   if (build.status !== 0) process.exit(build.status || 1);
 }
@@ -62,7 +62,7 @@ function openBrowser() {
 }
 
 if (await ready()) {
-  console.log(`Video Studio уже работает: ${url}`);
+  console.log(`Video Studio is already running: ${url}`);
   openBrowser();
   process.exit(0);
 }
@@ -82,9 +82,9 @@ for (let attempt = 0; attempt < 40; attempt += 1) {
 }
 if (!started) {
   server.kill();
-  throw new Error("Сервер не запустился. Проверьте порт и настройки командой npm run doctor.");
+  throw new Error("The server did not start. Check the port and configuration with npm run doctor.");
 }
-console.log(`Открываю ${url}`);
+console.log(`Opening ${url}`);
 openBrowser();
 for (const signal of ["SIGINT", "SIGTERM"])
   process.on(signal, () => server.kill(signal));

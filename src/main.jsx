@@ -13,22 +13,22 @@ async function api(url, options) {
     r = await fetch(url, options);
   } catch {
     throw new Error(
-      "Нет соединения с локальной студией. Запустите сервер и обновите страницу. Запрос не будет повторён автоматически.",
+      "Cannot connect to the local studio. Start the server and refresh the page. The request will not be retried automatically.",
     );
   }
   const body = await r.json();
-  if (!r.ok) throw new Error(body.error || "Ошибка запроса");
+  if (!r.ok) throw new Error(body.error || "Request failed");
   return body;
 }
 const labels = {
-  submitting: "Отправляется",
-  pending: "В очереди",
-  in_progress: "Создаётся",
-  completed: "Готово",
-  failed: "Ошибка",
-  cancelled: "Отменено",
-  expired: "Истекло",
-  submission_unknown: "Проверьте OpenRouter",
+  submitting: "Submitting",
+  pending: "Queued",
+  in_progress: "Generating",
+  completed: "Completed",
+  failed: "Failed",
+  cancelled: "Cancelled",
+  expired: "Expired",
+  submission_unknown: "Check OpenRouter",
 };
 const activeStatuses = new Set(["submitting", "pending", "in_progress"]);
 const notificationStatuses = new Set([
@@ -42,7 +42,7 @@ function modelLabel(model) {
     model.id === "minimax/hailuo-3"
       ? " · Motion Control"
       : model.id === "minimax/hailuo-3-max"
-        ? " · без Motion Control"
+        ? " · no Motion Control"
         : "";
   return `${model.stars ? `${"★".repeat(model.stars)} ` : ""}${model.name}${capability}`;
 }
@@ -128,9 +128,9 @@ function App() {
   const hasActiveJob = jobs.some((item) => activeStatuses.has(item.status));
   useEffect(() => {
     if (unseenEvent?.status === "completed")
-      document.title = "● Видео готово · Video Studio";
-    else if (unseenEvent) document.title = "● Нужна проверка · Video Studio";
-    else if (hasActiveJob) document.title = "⏳ Идёт генерация · Video Studio";
+      document.title = "● Video ready · Video Studio";
+    else if (unseenEvent) document.title = "● Action required · Video Studio";
+    else if (hasActiveJob) document.title = "⏳ Generating · Video Studio";
     else document.title = "Video Studio";
     return () => {
       document.title = "Video Studio";
@@ -206,38 +206,38 @@ function App() {
           ▧ <span>Video Studio</span>
         </a>
         <span className="mode">
-          {config.demo ? "● ДЕМО · без списаний" : "● Локальная студия"}
+          {config.demo ? "● DEMO · no charges" : "● Local studio"}
         </span>
       </header>
       <Account />
-      <nav className="tabs mainTabs" aria-label="Разделы студии">
+      <nav className="tabs mainTabs" aria-label="Studio sections">
         <button
           aria-pressed={tab === "generate"}
           className={tab === "generate" ? "active" : ""}
           onClick={() => setTab("generate")}
         >
-          Генерация видео
+          Video generation
         </button>
         <button
           aria-pressed={tab === "analysis"}
           className={tab === "analysis" ? "active" : ""}
           onClick={() => setTab("analysis")}
         >
-          Анализ видео · Gemini
+          Video analysis · Gemini
         </button>
         <button
           aria-pressed={tab === "collections"}
           className={tab === "collections" ? "active" : ""}
           onClick={() => setTab("collections")}
         >
-          Коллекции
+          Collections
         </button>
         <button
           aria-pressed={tab === "metadata"}
           className={tab === "metadata" ? "active" : ""}
           onClick={() => setTab("metadata")}
         >
-          Метаданные EXIF
+          EXIF metadata
         </button>
       </nav>
       {unseenEvent && (
@@ -253,10 +253,10 @@ function App() {
           <span className="noticeDot" aria-hidden="true" />
           <strong>
             {unseenEvent.status === "completed"
-              ? "Видео готово"
-              : "Генерация требует внимания"}
+              ? "Video ready"
+              : "Generation needs attention"}
           </strong>
-          <span>Открыть результат →</span>
+          <span>Open result →</span>
         </button>
       )}
       <div hidden={tab !== "metadata"}>
@@ -288,21 +288,21 @@ function App() {
         <div className="workspace">
           <section className="composer">
             <div className="sectionTitle">
-              <span className="eyebrow">НОВАЯ ГЕНЕРАЦИЯ</span>
+              <span className="eyebrow">NEW GENERATION</span>
               <span>01 / CREATE</span>
             </div>
-            <h1>От идеи к кадру.</h1>
+            <h1>From idea to frame.</h1>
             <form onSubmit={submit}>
               <div className="modelPicker">
                 <label>
-                  Модель
+                  Model
                   <select
                     value={modelId}
                     onChange={(e) => setModelId(e.target.value)}
                     disabled={loading || busy}
                   >
                     <option value="" disabled>
-                      {loading ? "Загрузка моделей…" : "Выберите модель"}
+                      {loading ? "Loading models…" : "Select a model"}
                     </option>
                     {models.map((m) => (
                       <option key={m.id} value={m.id}>
@@ -317,7 +317,7 @@ function App() {
                   disabled={!model}
                   onClick={() => setGuideOpen(true)}
                 >
-                  Инструкция
+                  Model guide
                 </button>
               </div>
               {model && (
@@ -326,33 +326,33 @@ function App() {
               {modelId === "minimax/hailuo-3-max" &&
                 models.some((m) => m.id === "minimax/hailuo-3") && (
                   <div className="motionSuggestion">
-                    <span>Motion Control доступен в обычной MiniMax H3.</span>
+                    <span>Motion Control is available in the standard MiniMax H3 model.</span>
                     <button
                       type="button"
                       onClick={() => setModelId("minimax/hailuo-3")}
                     >
-                      Выбрать H3 →
+                      Select H3 →
                     </button>
                   </div>
                 )}
               <label>
-                Описание сцены
+                Scene description
                 <textarea
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
                   required
                   rows={5}
-                  placeholder="Что происходит в кадре? Опишите движение, свет и работу камеры…"
+                  placeholder="What happens in the shot? Describe motion, lighting, and camera work…"
                 />
                 <span
                   className={`hint promptCount ${
                     promptLength > promptLimit ? "overLimit" : ""
                   }`}
                 >
-                  {promptLength.toLocaleString("ru-RU")} /{" "}
-                  {promptLimit.toLocaleString("ru-RU")} символов
+                  {promptLength.toLocaleString("en-US")} /{" "}
+                  {promptLimit.toLocaleString("en-US")} characters
                   {modelId === "alibaba/wan-3.0-prime"
-                    ? " · лимит Wan 3.0 Prime"
+                    ? " · Wan 3.0 Prime limit"
                     : ""}
                 </span>
               </label>
@@ -369,9 +369,9 @@ function App() {
               )}
               <div className="parameters">
                 {[
-                  ["duration", "Длительность", model?.durations],
-                  ["resolution", "Разрешение", model?.resolutions],
-                  ["aspect_ratio", "Формат", model?.aspectRatios],
+                  ["duration", "Duration", model?.durations],
+                  ["resolution", "Resolution", model?.resolutions],
+                  ["aspect_ratio", "Aspect ratio", model?.aspectRatios],
                 ].map(
                   ([key, label, values]) =>
                     values?.length > 0 && (
@@ -389,11 +389,11 @@ function App() {
                             }))
                           }
                         >
-                          <option value="">Авто</option>
+                          <option value="">Auto</option>
                           {values.map((v) => (
                             <option key={v} value={v}>
                               {v}
-                              {key === "duration" ? " сек" : ""}
+                              {key === "duration" ? " sec" : ""}
                             </option>
                           ))}
                         </select>
@@ -413,13 +413,13 @@ function App() {
                       }))
                     }
                   />
-                  Создать звук
+                  Generate audio
                 </label>
               )}
               <p className="hint">
                 {config.demo
-                  ? "Тестовый сценарий. Видео не генерируется моделью."
-                  : "Генерация расходует баланс OpenRouter. Стоимость зависит от модели и настроек."}
+                  ? "Demo scenario. No model-generated video is created."
+                  : "Generation uses your OpenRouter balance. Cost depends on the model and settings."}
               </p>
               <div className="submitActions">
                 <button
@@ -435,7 +435,7 @@ function App() {
                     uploading
                   }
                 >
-                  {busy ? "Отправляется…" : "Создать видео"} <span>↗</span>
+                  {busy ? "Submitting…" : "Generate video"} <span>↗</span>
                 </button>
                 {busy && requestKey.current && (
                   <button
@@ -445,8 +445,8 @@ function App() {
                     onClick={() => cancelJob(requestKey.current)}
                   >
                     {cancelBusy === requestKey.current
-                      ? "Отменяем…"
-                      : "Отменить отправку"}
+                      ? "Cancelling…"
+                      : "Cancel submission"}
                   </button>
                 )}
               </div>
@@ -455,19 +455,19 @@ function App() {
               <div role="alert" className="error">
                 {error}
                 <button type="button" onClick={loadModels}>
-                  Обновить каталог
+                  Reload catalog
                 </button>
               </div>
             )}
           </section>
           <section className="viewer">
             <div className="sectionTitle">
-              <span className="eyebrow">ПРОСМОТР</span>
+              <span className="eyebrow">PREVIEW</span>
               <span
                 className={`viewerStatus ${job?.status || "idle"}`}
                 aria-live="polite"
               >
-                {job ? labels[job.status] : "Готов к работе"}
+                {job ? labels[job.status] : "Ready"}
               </span>
             </div>
             <div className="screen">
@@ -479,7 +479,7 @@ function App() {
                   playsInline
                   onError={() =>
                     setError(
-                      "Видео не удалось загрузить. Попробуйте скачать или проверьте срок хранения у провайдера.",
+                      "The video could not be loaded. Try downloading it or check the provider retention period.",
                     )
                   }
                 />
@@ -496,16 +496,16 @@ function App() {
                     ▷
                   </div>
                   <h2>
-                    {job ? labels[job.status] : "Здесь появится ваше видео"}
+                    {job ? labels[job.status] : "Your video will appear here"}
                   </h2>
                   <p>
                     {!job
-                      ? "Выберите модель, опишите сцену и начните генерацию."
+                      ? "Select a model, describe the scene, and start generation."
                       : job.status === "cancelled"
-                        ? "Studio больше не проверяет это задание. Уже принятая OpenRouter генерация может продолжиться."
+                        ? "The studio is no longer polling this job. A generation already accepted by OpenRouter may continue."
                         : activeStatuses.has(job.status)
-                          ? "Результат появится автоматически. Можно закрыть вкладку: сервер продолжит проверку."
-                          : "Откройте сообщение ниже, чтобы проверить подробности."}
+                          ? "The result will appear automatically. You can close this tab; the server will keep polling."
+                          : "Open the message below for details."}
                   </p>
                 </div>
               )}
@@ -514,7 +514,7 @@ function App() {
               <div className="result">
                 <div className="promptCard">
                   <div className="promptCardHeader">
-                    <span>Промпт</span>
+                    <span>Prompt</span>
                     <button
                       type="button"
                       onClick={async () => {
@@ -523,24 +523,23 @@ function App() {
                           setCopiedPrompt(true);
                           setTimeout(() => setCopiedPrompt(false), 1800);
                         } catch {
-                          setError("Не удалось скопировать промпт.");
+                          setError("Could not copy the prompt.");
                         }
                       }}
                     >
-                      {copiedPrompt ? "Скопировано" : "Копировать"}
+                      {copiedPrompt ? "Copied" : "Copy"}
                     </button>
                   </div>
                   <pre tabIndex="0">{job.prompt}</pre>
                 </div>
                 {job.demo && (
                   <p className="hint">
-                    Демонстрационный MP4: тестовая таблица, не результат
-                    AI-генерации.
+                    Demo MP4: a test card, not an AI-generated result.
                   </p>
                 )}
                 {job.pollPaused && (
                   <div className="error">
-                    Автопроверка приостановлена после 120 попыток.
+                    Automatic polling paused after 120 attempts.
                     <button
                       onClick={() =>
                         api(`/api/jobs/${job.id}/resume`, { method: "POST" })
@@ -548,7 +547,7 @@ function App() {
                           .catch((e) => setError(e.message))
                       }
                     >
-                      Продолжить проверку
+                      Resume polling
                     </button>
                   </div>
                 )}
@@ -562,7 +561,7 @@ function App() {
                       className="download"
                       href={`/api/jobs/${job.id}/content?download=1`}
                     >
-                      Скачать MP4 ↓
+                      Download MP4 ↓
                     </a>
                   )}
                   {activeStatuses.has(job.status) && (
@@ -573,8 +572,8 @@ function App() {
                       onClick={() => cancelJob(job.id)}
                     >
                       {cancelBusy === job.id
-                        ? "Останавливаем…"
-                        : "Отменить отслеживание"}
+                        ? "Stopping…"
+                        : "Stop polling"}
                     </button>
                   )}
                 </div>
@@ -588,18 +587,18 @@ function App() {
                 )}
                 {job.pollError && (
                   <p className="error">
-                    {job.pollError} Проверка повторится автоматически.
+                    {job.pollError} Polling will retry automatically.
                   </p>
                 )}
               </div>
             )}
             <section className="history">
               <div className="sectionTitle">
-                <h2>История</h2>
-                <span>{jobs.length} генераций</span>
+                <h2>History</h2>
+                <span>{jobs.length} generations</span>
               </div>
               {!jobs.length ? (
-                <p className="hint">Ваши генерации сохранятся здесь.</p>
+                <p className="hint">Your generations will be saved here.</p>
               ) : (
                 <div className="historyList" tabIndex="0">
                   {jobs.map((j) => (
@@ -619,7 +618,7 @@ function App() {
                         <strong>{j.prompt}</strong>
                         <small>
                           {j.model} ·{" "}
-                          {new Date(j.createdAt).toLocaleString("ru")}
+                          {new Date(j.createdAt).toLocaleString("en-US")}
                         </small>
                       </span>
                       <span className={`status ${j.status}`}>
@@ -634,7 +633,7 @@ function App() {
         </div>
       </div>
       <footer>
-        VIDEO STUDIO <span>Локальная история · Ключ хранится на сервере</span>
+        VIDEO STUDIO <span>Local history · API key stays on the server</span>
       </footer>
       {guideOpen && model && (
         <ModelGuide

@@ -3,7 +3,7 @@ export function openRouter(apiKey, fetcher = fetch) {
   async function request(path, options = {}) {
     if (!apiKey)
       throw Object.assign(
-        new Error("Добавьте OPENROUTER_API_KEY в .env и перезапустите сервер."),
+        new Error("Add OPENROUTER_API_KEY to .env and restart the server."),
         { status: 503 },
       );
     let response;
@@ -20,7 +20,7 @@ export function openRouter(apiKey, fetcher = fetch) {
       });
     } catch {
       throw Object.assign(
-        new Error("Нет ответа OpenRouter. Проверьте соединение."),
+        new Error("OpenRouter did not respond. Check your connection."),
         { status: 502, uncertain: options.method === "POST" },
       );
     }
@@ -49,7 +49,7 @@ export function openRouter(apiKey, fetcher = fetch) {
       } catch {
         throw Object.assign(
           new Error(
-            "Ответ анализа не удалось прочитать. Проверьте расходы перед повтором.",
+            "The analysis response could not be read. Check usage before retrying.",
           ),
           { uncertain: true },
         );
@@ -87,7 +87,7 @@ export function openRouter(apiKey, fetcher = fetch) {
                   scope: i === 0 ? "balance" : "key",
                   message:
                     r.reason.status === 403 && i === 0
-                      ? "Баланс аккаунта недоступен этому ключу. OpenRouter может требовать management key."
+                      ? "The account balance is unavailable for this key. OpenRouter may require a management key."
                       : r.reason.message,
                 },
               ]
@@ -107,7 +107,7 @@ export function openRouter(apiKey, fetcher = fetch) {
       } catch {
         throw Object.assign(
           new Error(
-            "Ответ отправки не удалось прочитать. Проверьте OpenRouter перед новым запросом.",
+            "The submission response could not be read. Check OpenRouter before sending another request.",
           ),
           { uncertain: true },
         );
@@ -133,14 +133,14 @@ export function openRouter(apiKey, fetcher = fetch) {
           location.username ||
           location.password
         )
-          throw new Error("Некорректная ссылка на видео.");
+          throw new Error("Invalid video URL.");
         // Redirect is handed to the browser: the API key never leaves OpenRouter.
         return { redirect: location.href };
       }
       if (!response.ok)
         throw Object.assign(
           new Error(
-            `Видео недоступно: HTTP ${response.status}. Ссылка могла истечь.`,
+            `Video unavailable: HTTP ${response.status}. The URL may have expired.`,
           ),
           { status: response.status },
         );

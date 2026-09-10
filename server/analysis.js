@@ -18,33 +18,33 @@ export function selectGeminiModels(raw) {
     }));
 }
 export async function analysisPayload(body, model, root) {
-  if (!model) throw bad("Выберите Gemini с поддержкой видео.");
+  if (!model) throw bad("Select a Gemini model with video support.");
   if (
     typeof body.prompt !== "string" ||
     !body.prompt.trim() ||
     body.prompt.length > 20000
   )
-    throw bad("Промпт должен содержать от 1 до 20000 символов.");
-  if (!/^[a-f0-9-]{36}$/.test(body.assetId || "")) throw bad("Загрузите MP4.");
+    throw bad("The prompt must contain between 1 and 20,000 characters.");
+  if (!/^[a-f0-9-]{36}$/.test(body.assetId || "")) throw bad("Upload an MP4 file.");
   if (body.quality && !["standard", "max"].includes(body.quality))
-    throw bad("Неизвестный режим точности.");
+    throw bad("Unknown analysis quality mode.");
   let metadata;
   try {
     metadata = JSON.parse(
       await readFile(path.join(root, body.assetId + ".json"), "utf8"),
     );
   } catch {
-    throw bad("Файл не найден.");
+    throw bad("File not found.");
   }
   if (
     metadata.kind !== "video" ||
     metadata.mime !== "video/mp4" ||
     metadata.file !== body.assetId + ".mp4"
   )
-    throw bad("Для анализа нужен MP4.");
+    throw bad("An MP4 file is required for analysis.");
   const buffer = await readFile(path.join(root, metadata.file));
   if (buffer.length > 25 * 1024 * 1024)
-    throw bad("Максимальный размер — 25 МБ.");
+    throw bad("Maximum size is 25 MB.");
   const payload = {
     model: model.id,
     messages: [
@@ -93,9 +93,9 @@ export function analysisResult(response) {
     usage: response.usage,
     warning:
       choice?.finish_reason === "length"
-        ? "Ответ обрезан лимитом токенов. Повторный анализ платный."
+        ? "The response was truncated by the token limit. Running analysis again is billable."
         : !json
-          ? "Gemini не вернул корректный JSON. Сохранён исходный ответ; автоматического повтора нет."
+          ? "Gemini did not return valid JSON. The raw response was saved and will not be retried automatically."
           : null,
   };
 }
@@ -128,17 +128,17 @@ export function installAnalysis(app, { provider, store, assets, demo }) {
     if (job.kind === "analysis" && job.status === "analyzing") {
       job.status = "submission_unknown";
       job.error =
-        "Сервер перезапущен во время анализа. Проверьте расходы перед повтором.";
+        "The server restarted during analysis. Check usage before retrying.";
       store.put(job);
     }
   app.post("/api/analysis/jobs", async (req, res) => {
     const id = req.get("Idempotency-Key");
     if (!/^[a-zA-Z0-9-]{10,100}$/.test(id || ""))
-      throw bad("Требуется ключ запроса.");
+      throw bad("An idempotency key is required.");
     const existing = store.get(id);
     if (existing) {
       if (existing.kind !== "analysis")
-        throw bad("Ключ уже использован для другого запроса.");
+        throw bad("This idempotency key was already used for another request.");
       return res.json(existing);
     }
     const model = (await models()).find((m) => m.id === req.body.model);
@@ -152,7 +152,7 @@ export function installAnalysis(app, { provider, store, assets, demo }) {
     )
       return res
         .status(409)
-        .json({ error: "Дождитесь завершения текущего анализа." });
+        .json({ error: "Wait for the current analysis to finish." });
     const job = {
       id,
       kind: "analysis",
@@ -175,7 +175,7 @@ export function installAnalysis(app, { provider, store, assets, demo }) {
                   message: {
                     content: JSON.stringify({
                       demo: true,
-                      note: "Тестовый JSON; видео не анализировалось.",
+                      note: "Demo JSON; the video was not analyzed.",
                     }),
                   },
                   finish_reason: "stop",

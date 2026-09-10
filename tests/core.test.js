@@ -113,7 +113,7 @@ test("catalog exposes model guidance, favorites and observed provider limits", a
   const model = (await request(f.app).get("/api/models")).body.data[0];
   assert.equal(model.promptMaxChars, 2_500);
   assert.equal(model.stars, 2);
-  assert.ok(model.guidance.some((note) => note.includes("2 500")));
+  assert.ok(model.guidance.some((note) => note.includes("2,500")));
   assert.match(model.guidanceSource, /^https:\/\/openrouter\.ai\//);
   assert.equal(
     (
@@ -214,7 +214,7 @@ test("cancel stops local polling and is idempotent", async (t) => {
   assert.equal(cancelled.status, 200);
   assert.equal(cancelled.body.status, "cancelled");
   assert.equal(cancelled.body.cancellationScope, "local_tracking");
-  assert.match(cancelled.body.cancellationNote, /может продолжиться/);
+  assert.match(cancelled.body.cancellationNote, /may continue/);
   assert.equal(
     (await request(f.app).post(`/api/jobs/${submitted.body.id}/cancel`)).status,
     200,

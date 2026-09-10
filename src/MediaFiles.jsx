@@ -7,18 +7,18 @@ export function MediaCard({ item, label, onRemove }) {
     <div className="mediaPreview">
       {!failed && source ? (item.kind === "video"
         ? <video src={source} controls playsInline preload="metadata" onError={() => setFailed(true)} aria-label={item.name} />
-        : <img src={source} alt={item.name || "Референс"} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />)
-        : <span className="mediaFallback">{item.kind === "video" ? "▷ Видео" : "▧ Изображение"}<small>Предпросмотр недоступен</small></span>}
+        : <img src={source} alt={item.name || "Reference"} loading="lazy" referrerPolicy="no-referrer" onError={() => setFailed(true)} />)
+        : <span className="mediaFallback">{item.kind === "video" ? "▷ Video" : "▧ Image"}<small>Preview unavailable</small></span>}
     </div>
-    <div className="mediaDetails"><small>{label} · {item.kind === "video" ? "Видео" : "Изображение"}</small>
+    <div className="mediaDetails"><small>{label} · {item.kind === "video" ? "Video" : "Image"}</small>
       <strong title={item.name}>{item.name}</strong>
-      <span>{item.size != null ? `${(item.size / 1024 / 1024).toFixed(2)} МБ` : "По ссылке"}</span>
-      <button type="button" onClick={onRemove} aria-label={`Удалить ${item.name}`}>Удалить</button>
+      <span>{item.size != null ? `${(item.size / 1024 / 1024).toFixed(2)} MB` : "Remote URL"}</span>
+      <button type="button" onClick={onRemove} aria-label={`Delete ${item.name}`}>Delete</button>
     </div>
   </article>;
 }
 
-export function FileUploader({ kinds, maxFiles, kindLimits = {}, videoEnabled, onUploaded, onBusy, title = "Добавить файлы" }) {
+export function FileUploader({ kinds, maxFiles, kindLimits = {}, videoEnabled, onUploaded, onBusy, title = "Add files" }) {
   const [busy, setBusy] = useState(false);
   const [rows, setRows] = useState([]);
   const [pickerVersion, setPickerVersion] = useState(0);
@@ -27,26 +27,26 @@ export function FileUploader({ kinds, maxFiles, kindLimits = {}, videoEnabled, o
     const files = Array.from(event.target.files || []);
     event.target.value = "";
     if (!files.length || busy) return;
-    const states = files.map((f) => ({ name: f.name, status: "В очереди" }));
+    const states = files.map((f) => ({ name: f.name, status: "Queued" }));
     setRows([...states]); setBusy(true); onBusy(true);
     const uploaded = [];
     try {
       for (const [i, file] of files.entries()) {
         try {
-          if (uploaded.length >= maxFiles) throw new Error(`Лимит вложений: можно добавить ещё ${maxFiles}.`);
+          if (uploaded.length >= maxFiles) throw new Error(`Attachment limit: you can add ${maxFiles}.`);
           const kind = file.type.startsWith("video/") ? "video" : "image";
-          if (!kinds.includes(kind)) throw new Error("Этот тип файла недоступен в выбранном режиме.");
-          if (uploaded.filter((a) => a.kind === kind).length >= (kindLimits[kind] ?? Infinity)) throw new Error("Для этого типа уже заполнено поле. Сначала удалите прежний файл.");
-          if (kind === "video" && !videoEnabled) throw new Error("Для MP4 нужна публичная HTTPS-ссылка; загрузка видео пока не настроена.");
-          if (file.size > 25 * 1024 * 1024) throw new Error("Файл больше 25 МБ.");
-          states[i] = { name: file.name, status: "Загружается…" }; setRows([...states]);
+          if (!kinds.includes(kind)) throw new Error("This file type is not available in the selected mode.");
+          if (uploaded.filter((a) => a.kind === kind).length >= (kindLimits[kind] ?? Infinity)) throw new Error("This input already has a file. Remove it before adding another.");
+          if (kind === "video" && !videoEnabled) throw new Error("MP4 uploads require a public HTTPS URL; video upload is not configured.");
+          if (file.size > 25 * 1024 * 1024) throw new Error("The file is larger than 25 MB.");
+          states[i] = { name: file.name, status: "Uploading…" }; setRows([...states]);
           const form = new FormData(); form.append("file", file);
           const response = await fetch("/api/uploads", { method: "POST", body: form });
           const asset = await response.json();
-          if (!response.ok) throw new Error(asset.error || "Ошибка загрузки.");
-          if (!kinds.includes(asset.kind)) throw new Error("Фактический формат файла не поддерживается.");
+          if (!response.ok) throw new Error(asset.error || "Upload failed.");
+          if (!kinds.includes(asset.kind)) throw new Error("The detected file format is not supported.");
           uploaded.push({ assetId: asset.id, name: asset.name, kind: asset.kind, size: asset.size, previewUrl: asset.previewUrl });
-          states[i] = { name: file.name, status: "Добавлен" };
+          states[i] = { name: file.name, status: "Added" };
         } catch (e) { states[i] = { name: file.name, status: e.message, error: true }; }
         setRows([...states]);
       }
@@ -63,11 +63,11 @@ export function FileUploader({ kinds, maxFiles, kindLimits = {}, videoEnabled, o
   const canPick = !busy && maxFiles > 0;
   return <div className="uploadPanel">
     <div className="fileInput">
-      <strong>{busy ? "Загрузка файлов…" : title}</strong>
-      <span>Можно добавить ещё: {maxFiles} · до 25 МБ каждый</span>
+      <strong>{busy ? "Uploading files…" : title}</strong>
+      <span>Files remaining: {maxFiles} · up to 25 MB each</span>
       <button type="button" className="pickFilesButton" disabled={!canPick}
         onClick={() => { inputRef.current?.click(); }}>
-        {maxFiles > 1 ? "＋ Добавить файлы" : "＋ Добавить файл"}
+        {maxFiles > 1 ? "＋ Add files" : "＋ Add file"}
       </button>
       <input key={pickerVersion} ref={inputRef} className="nativeFilePicker" type="file"
         multiple={maxFiles > 1} disabled={!canPick} aria-label={title}

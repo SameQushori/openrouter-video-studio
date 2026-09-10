@@ -10,7 +10,7 @@ import {selectGeminiModels,analysisResult,analysisPayload} from '../server/analy
 import {tiktokUrl} from '../server/tiktok.js';
 const model={id:'google/gemini-test',name:'Gemini',architecture:{input_modalities:['video'],output_modalities:['text']},supported_parameters:['response_format','reasoning'],pricing:{prompt:'0.000002',completion:'0.000012'}};
 test('Gemini discovery excludes generation, non-video and batch models',()=>{assert.equal(selectGeminiModels([model,{...model,id:'google/gemini-test:batch'},{...model,id:'other/model'},{...model,architecture:{}}]).length,1);});
-test('invalid/truncated JSON is preserved with usage without automatic retry',()=>{const b=analysisResult({choices:[{message:{content:'{"unfinished":'},finish_reason:'length'}],usage:{cost:.02}});assert.equal(b.jsonValid,false);assert.equal(b.usage.cost,.02);assert.match(b.warning,/обрезан/);});
+test('invalid/truncated JSON is preserved with usage without automatic retry',()=>{const b=analysisResult({choices:[{message:{content:'{"unfinished":'},finish_reason:'length'}],usage:{cost:.02}});assert.equal(b.jsonValid,false);assert.equal(b.usage.cost,.02);assert.match(b.warning,/truncated/);});
 test('maximum analysis quality requests a larger deterministic response',async t=>{
  const dir=mkdtempSync(path.join(os.tmpdir(),'studio-analysis-quality-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
  const id='11111111-1111-4111-8111-111111111111';

@@ -4,9 +4,9 @@ export function demoProvider() {
     models: async () => [
       {
         id: "demo/studio",
-        name: "Studio Demo · без списаний",
+        name: "Studio Demo · no charges",
         description:
-          "Тестовая модель для проверки интерфейса. Реальная генерация отключена.",
+          "Demo model for testing the interface. Real generation is disabled.",
         supported_durations: [4, 8],
         supported_resolutions: ["720p", "1080p"],
         supported_aspect_ratios: ["16:9", "9:16", "1:1"],

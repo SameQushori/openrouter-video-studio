@@ -24,11 +24,11 @@ for (const file of files) {
     continue;
   }
   const relative = path.relative(root, file);
-  if (/sk-or-v1-[A-Za-z0-9_-]{20,}/.test(text)) findings.push(`${relative}: возможный OpenRouter key`);
-  if (/C:\\Users\\[^\\\r\n]+/i.test(text)) findings.push(`${relative}: абсолютный пользовательский путь Windows`);
-  if (/"id"\s*:\s*"[a-f0-9]{32}"/i.test(text)) findings.push(`${relative}: персональный Cloudflare resource ID`);
+  if (/sk-or-v1-[A-Za-z0-9_-]{20,}/.test(text)) findings.push(`${relative}: possible OpenRouter key`);
+  if (/C:\\Users\\[^\\\r\n]+/i.test(text)) findings.push(`${relative}: absolute Windows user path`);
+  if (/"id"\s*:\s*"[a-f0-9]{32}"/i.test(text)) findings.push(`${relative}: personal Cloudflare resource ID`);
 }
 if (findings.length) {
   console.error(findings.join("\n"));
   process.exitCode = 1;
-} else console.log(`✓ Проверено ${files.length} публичных файлов: секреты и персональные пути не найдены.`);
+} else console.log(`✓ Checked ${files.length} public files: no secrets or personal paths found.`);

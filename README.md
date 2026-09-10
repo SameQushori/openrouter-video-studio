@@ -1,36 +1,36 @@
 # OpenRouter Video Studio
 
-Локальная self-hosted студия для генерации и анализа видео через собственный OpenRouter API key. Поддержка моделей определяется по каталогу OpenRouter и проверенным capability overrides, поэтому интерфейс не привязан к одному семейству моделей.
+A self-hosted studio for generating and analyzing video with your own OpenRouter API key. The interface is capability-driven: it reads the current OpenRouter model catalog and applies documented capability overrides instead of being tied to one model family.
 
-## Возможности
+## Features
 
-- text-to-video, первый кадр, несколько image/video references и Motion Control для совместимых моделей;
-- Seedance, Wan, MiniMax H3 и другие доступные video-модели OpenRouter;
-- асинхронные задания, восстановление polling, локальная история, preview и download;
-- анализ видео через Gemini с готовыми промптами для Wan и MiniMax;
-- коллекции пользовательских промптов;
-- импорт публичных TikTok-видео через опциональный yt-dlp;
-- локальное удаление и перенос EXIF/XMP/QuickTime/C2PA для MP4 и изображений;
-- demo-режим без сетевых запросов и списаний.
+- Text-to-video, first-frame generation, multiple image/video references, and Motion Control for compatible models
+- Seedance, Wan, MiniMax H3, and other video models available through OpenRouter
+- Asynchronous jobs, polling recovery, local history, preview, and download
+- Gemini video analysis with ready-to-use prompts for Wan and MiniMax
+- A local prompt collection
+- Public TikTok video import through optional `yt-dlp`
+- Local EXIF/XMP/QuickTime/C2PA cleanup and metadata transfer for MP4 and image files
+- A demo mode with no network requests or charges
 
-Ключ хранится только в локальном `.env`. История, коллекции и загрузки находятся в `data/`, которая исключена из Git.
+Your API key stays in the local `.env` file on the backend. History, collections, uploads, and results are stored in `data/`, which is excluded from Git.
 
-## Быстрый запуск
+## Quick start
 
-Требуется [Node.js 22.13+](https://nodejs.org/).
+Requires [Node.js 22.13+](https://nodejs.org/).
 
 ### Windows
 
-Скачайте репозиторий и дважды нажмите **`Start Video Studio.cmd`**. При первом запуске зависимости установятся автоматически, после чего мастер предложит demo-режим или OpenRouter API key.
+Download the repository and double-click **`Start Video Studio.cmd`**. On the first run, dependencies are installed automatically and the setup wizard lets you choose demo mode or enter an OpenRouter API key.
 
-### macOS и Linux
+### macOS and Linux
 
 ```sh
 chmod +x start-video-studio.sh
 ./start-video-studio.sh
 ```
 
-### Через терминал
+### Terminal
 
 ```sh
 npm ci
@@ -38,53 +38,48 @@ npm run setup
 npm start
 ```
 
-Studio откроется по адресу `http://127.0.0.1:3001`. Для проверки без расходов выберите demo-режим. Платный запрос выполняется только после нажатия кнопки генерации или анализа.
+The studio opens at `http://127.0.0.1:3001`. Choose demo mode to test the interface without spending money. A paid request is sent only when you explicitly start video generation or Gemini analysis.
 
-## Видеореференсы и Motion Control
+## Video references and Motion Control
 
-Изображения передаются непосредственно в OpenRouter. Локальный MP4 должен быть доступен модели по публичному HTTPS URL. Рекомендуемый вариант — собственный временный Cloudflare Media Worker:
+Images are sent directly to OpenRouter. A local MP4 must be reachable by the model through a public HTTPS URL. The recommended option is your own temporary Cloudflare Media Worker:
 
 ```sh
 npm run setup:worker
 ```
 
-Команда авторизует Wrangler, создаст персональный KV namespace, развернёт Worker, создаст случайный upload secret и сохранит URL с секретом только в локальный `.env`. Файлы получают случайные адреса и удаляются через 24 часа.
+This command signs in to Wrangler, creates a private KV namespace, deploys the Worker, generates a random upload secret, and stores the URL and secret only in your local `.env`. Uploaded files receive random URLs and expire after 24 hours.
 
-Cloudflare необязателен: можно вставлять собственные прямые HTTPS-ссылки или использовать `PUBLIC_ASSET_BASE_URL`. Не публикуйте весь Express backend — в нём нет многопользовательской авторизации.
+Cloudflare is optional. You can paste direct public HTTPS links or configure `PUBLIC_ASSET_BASE_URL`. Do not expose the complete Express backend to the internet; it is designed as a single-user local application and has no multi-user authentication.
 
 ## Docker
 
-Создайте `.env` командой `npm run setup`, затем:
+Create `.env` with `npm run setup`, then run:
 
 ```sh
 docker compose up --build -d
 ```
 
-Порт контейнера публикуется только на `127.0.0.1:3001`, а `./data` подключается как постоянное локальное хранилище.
+The container port is published only on `127.0.0.1:3001`, while `./data` is mounted as persistent local storage.
 
-## Проверка установки
+## Validation and backups
 
 ```sh
 npm run doctor
 npm run check
-```
-
-`npm run check` запускает тесты, production-сборку, диагностику зависимостей и проверку публичных файлов на ключи, персональные пути и Cloudflare resource IDs. Проверки не вызывают OpenRouter и ничего не списывают.
-
-Перед обновлением можно сохранить историю, коллекции и встроенные промпты:
-
-```sh
 npm run backup
 ```
 
-Копия появится в `.studio-backups/`. `.env` и API key намеренно в неё не включаются.
+`npm run check` runs the test suite, production build, dependency diagnostics, and a public-file scan for API keys, personal paths, and Cloudflare resource IDs. These checks do not contact OpenRouter and do not spend credits.
 
-## Документация
+`npm run backup` copies history, collections, uploads, results, and built-in prompts to `.studio-backups/`. The `.env` file and API key are intentionally excluded.
 
-- [Конфигурация](docs/CONFIGURATION.md)
-- [Архитектура и данные](docs/ARCHITECTURE.md)
-- [Разработка и выпуск](CONTRIBUTING.md)
-- [Безопасность](SECURITY.md)
+## Documentation
+
+- [Configuration](docs/CONFIGURATION.md)
+- [Architecture and local data](docs/ARCHITECTURE.md)
+- [Development and releases](CONTRIBUTING.md)
+- [Security](SECURITY.md)
 - [RALPH roadmap](RALPH.md)
 
-Проект распространяется по лицензии [MIT](LICENSE).
+Licensed under the [MIT License](LICENSE).

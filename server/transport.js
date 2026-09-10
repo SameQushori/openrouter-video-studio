@@ -8,7 +8,7 @@ export function createTransport(proxyUrl) {
     !["127.0.0.1", "localhost", "[::1]"].includes(url.hostname)
   ) {
     throw new Error(
-      "OPENROUTER_PROXY_URL должен указывать на локальный HTTP-прокси.",
+      "OPENROUTER_PROXY_URL must point to a local HTTP proxy.",
     );
   }
   const dispatcher = new ProxyAgent(url.href);

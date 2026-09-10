@@ -7,7 +7,7 @@ const usd = (value) =>
         minimumFractionDigits: 2,
         maximumFractionDigits: 4,
       }).format(value)
-    : "Недоступно";
+    : "Unavailable";
 export function Account() {
   const [data, setData] = useState(null),
     [error, setError] = useState("");
@@ -36,45 +36,44 @@ export function Account() {
     };
   }, []);
   return (
-    <section className="account" aria-label="Баланс и расходы">
+    <section className="account" aria-label="Balance and usage">
       <div className="accountGrid">
         <div>
           <small>
-            {data?.demo ? "Демо · без списаний" : "Баланс аккаунта"}
+            {data?.demo ? "Demo · no charges" : "Account balance"}
           </small>
-          <strong>{data ? usd(data.balance) : "Загрузка…"}</strong>
+          <strong>{data ? usd(data.balance) : "Loading…"}</strong>
         </div>
         <div>
-          <small>Расход ключа · сегодня UTC</small>
+          <small>Key usage · today UTC</small>
           <strong>{data ? usd(data.keyDaily) : "—"}</strong>
         </div>
         <div>
-          <small>Расход ключа · всего</small>
+          <small>Key usage · all time</small>
           <strong>{data ? usd(data.keyUsage) : "—"}</strong>
         </div>
         <div>
-          <small>Видео и анализы студии</small>
+          <small>Studio video and analysis</small>
           <strong>{data ? usd(data.studioUsage) : "—"}</strong>
         </div>
       </div>
       <details>
-        <summary>Учёт расходов и токенов</summary>
+        <summary>Usage and token accounting</summary>
         <p>
-          Расход ключа за месяц: {usd(data?.keyMonthly)}. Остаток лимита ключа:{" "}
+          Key usage this month: {usd(data?.keyMonthly)}. Remaining key limit:{" "}
           {data?.keyRemaining == null
-            ? "не задан или недоступен"
+            ? "not set or unavailable"
             : usd(data.keyRemaining)}
           .
         </p>
         <p>
-          Для видео API возвращает стоимость в $, но не счётчик текстовых
-          токенов. Стоимость каждого ролика появится после генерации. Сумма
-          студии учитывает только сохранённые задания с известной стоимостью;
-          расходы ключа включают другие приложения.
+          For video, the API returns the cost in USD but no text-token count.
+          Each video's cost appears after generation. Studio usage includes only
+          saved jobs with reported costs; key usage also includes other apps.
         </p>
         {data?.unreportedJobs > 0 && (
           <p>
-            Без отчёта о стоимости: {data.unreportedJobs} завершённых заданий.
+            Jobs without a reported cost: {data.unreportedJobs} completed jobs.
           </p>
         )}
         {data?.errors?.map((e, i) => (
@@ -82,14 +81,14 @@ export function Account() {
         ))}
         {data?.checkedAt && (
           <p>
-            Обновлено: {new Date(data.checkedAt).toLocaleTimeString("ru")}.
-            Проверка каждые 30 секунд.
+            Updated: {new Date(data.checkedAt).toLocaleTimeString("en-US")}.
+            Checked every 30 seconds.
           </p>
         )}
       </details>
       {error && (
         <p className="error" role="alert">
-          Не удалось обновить баланс: {error}
+          Could not update balance: {error}
         </p>
       )}
     </section>

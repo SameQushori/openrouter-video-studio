@@ -5,8 +5,8 @@ $studioMutex = New-Object Threading.Mutex($false, 'Local\PersonalVideoStudioLaun
 $locked = $false
 try {
   $locked = $studioMutex.WaitOne(30000)
-  if (-not $locked) { throw 'Запуск уже выполняется. Повторите через минуту.' }
-  if (-not (Test-Path -LiteralPath '.env')) { throw 'Сначала создайте .env по примеру .env.example.' }
+  if (-not $locked) { throw 'Startup is already in progress. Try again in a minute.' }
+  if (-not (Test-Path -LiteralPath '.env')) { throw 'Create .env from .env.example first.' }
   $settings = Get-Content -LiteralPath '.env'
   $portLine = $settings | Where-Object { $_ -match '^PORT=\d+$' } | Select-Object -Last 1
   $studioPort = if ($portLine) { [int]($portLine.Split('=')[1]) } else { 3001 }
@@ -48,7 +48,7 @@ try {
   }
   function Start-PublicMediaTunnel {
     $cloudflared = (Get-Command cloudflared -ErrorAction SilentlyContinue).Source
-    if (-not $cloudflared) { throw 'Для загрузки MP4 нужен cloudflared. Установите Cloudflare Tunnel или укажите PUBLIC_ASSET_BASE_URL в .env.' }
+    if (-not $cloudflared) { throw 'MP4 upload requires cloudflared. Install Cloudflare Tunnel or set PUBLIC_ASSET_BASE_URL in .env.' }
     Stop-PreviousTunnel
     $tunnelLog = Join-Path $PSScriptRoot 'data/logs/cloudflared.log'
     $tunnelError = Join-Path $PSScriptRoot 'data/logs/cloudflared-error.log'
@@ -66,7 +66,7 @@ try {
     }
     if (-not $publicUrl) {
       if (-not $tunnelProcess.HasExited) { Stop-Process -Id $tunnelProcess.Id -Force }
-      throw 'Cloudflare Tunnel не выдал публичный адрес. Проверьте VPN/прокси и data/logs/cloudflared-error.log.'
+      throw 'Cloudflare Tunnel did not return a public URL. Check your VPN/proxy and data/logs/cloudflared-error.log.'
     }
     # A generated hostname is not enough: wait until the edge registers the connector.
     $registered = $false
@@ -78,7 +78,7 @@ try {
     }
     if (-not $registered) {
       if (-not $tunnelProcess.HasExited) { Stop-Process -Id $tunnelProcess.Id -Force }
-      throw 'Cloudflare выдал адрес, но не зарегистрировал соединение. Проверьте VPN/прокси и доступ к TCP 7844.'
+      throw 'Cloudflare returned a URL but did not register the connection. Check your VPN/proxy and access to TCP port 7844.'
     }
     @{ pid = $tunnelProcess.Id; url = $publicUrl; startedAt = (Get-Date).ToString('o') } | ConvertTo-Json | Set-Content -LiteralPath 'data/runtime/public-media-tunnel.json'
     return $publicUrl
@@ -91,8 +91,8 @@ try {
     $studioConfig = $null
   }
   if (-not (Test-Studio)) {
-    if (-not (Test-Path -LiteralPath 'node_modules')) { & npm.cmd ci; if ($LASTEXITCODE -ne 0) { throw 'Не удалось установить зависимости.' } }
-    if (-not (Test-Path -LiteralPath 'dist/index.html')) { & npm.cmd run build; if ($LASTEXITCODE -ne 0) { throw 'Не удалось собрать интерфейс.' } }
+    if (-not (Test-Path -LiteralPath 'node_modules')) { & npm.cmd ci; if ($LASTEXITCODE -ne 0) { throw 'Could not install dependencies.' } }
+    if (-not (Test-Path -LiteralPath 'dist/index.html')) { & npm.cmd run build; if ($LASTEXITCODE -ne 0) { throw 'Could not build the interface.' } }
     if ($fixedAssetUrl) { $env:PUBLIC_ASSET_BASE_URL = $fixedAssetUrl }
     elseif ($autoTunnel) {
       try { $env:PUBLIC_ASSET_BASE_URL = Start-PublicMediaTunnel }
@@ -105,7 +105,7 @@ try {
       if ($studioProcess.HasExited) { break }
       Start-Sleep -Milliseconds 500
     }
-    if (-not $ready) { throw 'Студия не запустилась. Проверьте data/logs/server-error.log и порт сервера.' }
+    if (-not $ready) { throw 'The studio did not start. Check data/logs/server-error.log and the server port.' }
   }
   $studioConfig = Get-StudioConfig
   if (-not $NoBrowser) { Start-Process -FilePath $studioUrl }

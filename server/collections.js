@@ -11,7 +11,7 @@ export function installCollections(app, store) {
     )
       throw Object.assign(
         new Error(
-          "Укажите название (до 160 символов) и промпт (до 50000 символов).",
+          "Enter a title (up to 160 characters) and prompt (up to 50,000 characters).",
         ),
         { status: 400 },
       );
@@ -31,14 +31,14 @@ export function installCollections(app, store) {
   });
   app.put("/api/collections/:id", (req, res) => {
     if (!store.getPrompt(req.params.id))
-      return res.status(404).json({ error: "Промпт не найден." });
+      return res.status(404).json({ error: "Prompt not found." });
     const p = { id: req.params.id, ...validate(req.body) };
     store.putPrompt(p);
     res.json(p);
   });
   app.delete("/api/collections/:id", (req, res) => {
     if (!store.getPrompt(req.params.id))
-      return res.status(404).json({ error: "Промпт не найден." });
+      return res.status(404).json({ error: "Prompt not found." });
     store.deletePrompt(req.params.id);
     res.sendStatus(204);
   });

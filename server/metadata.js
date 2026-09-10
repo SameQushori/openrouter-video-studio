@@ -68,27 +68,27 @@ function show(value) {
 }
 
 const visibleFields = [
-  ["make", "Производитель", ["Make", "DeviceManufacturer"]],
-  ["model", "Модель устройства", ["Model", "DeviceModelName"]],
-  ["lensMake", "Производитель объектива", ["LensMake"]],
-  ["lensModel", "Объектив", ["LensModel"]],
-  ["dateTimeOriginal", "Дата оригинала", ["DateTimeOriginal"]],
-  ["creationDate", "Дата создания с часовым поясом", ["CreationDate"]],
-  ["createDate", "Дата создания", ["CreateDate"]],
-  ["modifyDate", "Дата изменения", ["ModifyDate"]],
-  ["mediaCreateDate", "Дата медиапотока", ["MediaCreateDate"]],
-  ["trackCreateDate", "Дата видеодорожки", ["TrackCreateDate"]],
-  ["software", "Программа", ["Software"]],
-  ["encoder", "Кодировщик", ["Encoder", "Decoder"]],
-  ["artist", "Автор", ["Artist", "Author"]],
-  ["copyright", "Авторские права", ["Copyright"]],
-  ["title", "Название", ["Title"]],
-  ["description", "Описание", ["Description"]],
-  ["comment", "Комментарий", ["Comment"]],
-  ["keywords", "Ключевые слова", ["Keywords", "Subject"]],
-  ["orientation", "Ориентация", ["Orientation", "Rotation"]],
-  ["location", "Геолокация", ["GPSCoordinates", "GPSPosition"]],
-  ["aiMarker", "Маркер AI", ["AIGC", "DigitalSourceType"]],
+  ["make", "Manufacturer", ["Make", "DeviceManufacturer"]],
+  ["model", "Device model", ["Model", "DeviceModelName"]],
+  ["lensMake", "Lens manufacturer", ["LensMake"]],
+  ["lensModel", "Lens", ["LensModel"]],
+  ["dateTimeOriginal", "Original date", ["DateTimeOriginal"]],
+  ["creationDate", "Creation date with timezone", ["CreationDate"]],
+  ["createDate", "Creation date", ["CreateDate"]],
+  ["modifyDate", "Modified date", ["ModifyDate"]],
+  ["mediaCreateDate", "Media date", ["MediaCreateDate"]],
+  ["trackCreateDate", "Video track date", ["TrackCreateDate"]],
+  ["software", "Software", ["Software"]],
+  ["encoder", "Encoder", ["Encoder", "Decoder"]],
+  ["artist", "Author", ["Artist", "Author"]],
+  ["copyright", "Copyright", ["Copyright"]],
+  ["title", "Title", ["Title"]],
+  ["description", "Description", ["Description"]],
+  ["comment", "Comment", ["Comment"]],
+  ["keywords", "Keywords", ["Keywords", "Subject"]],
+  ["orientation", "Orientation", ["Orientation", "Rotation"]],
+  ["location", "Location", ["GPSCoordinates", "GPSPosition"]],
+  ["aiMarker", "AI marker", ["AIGC", "DigitalSourceType"]],
 ];
 
 function firstTag(tags, names) {
@@ -159,10 +159,10 @@ export function createMetadataProcessor({
     const referenceType = reference ? fileType(reference.buffer, false) : null;
     if (!generatedType)
       throw bad(
-        "Поддерживаются MP4, JPEG, PNG, WebP, HEIC, AVIF, GIF и TIFF.",
+        "MP4, JPEG, PNG, WebP, HEIC, AVIF, GIF, and TIFF are supported.",
       );
     if (reference && !referenceType)
-      throw bad("Эталоном может быть JPEG, PNG, WebP, HEIC или MP4.");
+      throw bad("The reference can be JPEG, PNG, WebP, HEIC, or MP4.");
     const isVideo = generatedType.mime === "video/mp4";
     const temp = await mkdtemp(
       path.join(os.tmpdir(), "video-studio-metadata-"),
@@ -296,7 +296,7 @@ async function hasC2pa(file) {
 
 async function removeAudioTrack(binary, input, output) {
   if (!binary)
-    throw bad("Видеоконвертер не установлен. Выполните npm install.", 503);
+    throw bad("The video converter is not installed. Run npm install.", 503);
   await run(
     binary,
     [
@@ -314,14 +314,14 @@ async function removeAudioTrack(binary, input, output) {
       "+faststart",
       output,
     ],
-    "Не удалось удалить аудиодорожку из MP4.",
+    "Could not remove the MP4 audio track.",
   );
 }
 
 function run(
   binary,
   args,
-  fallback = "ExifTool не смог обработать метаданные файла.",
+  fallback = "ExifTool could not process the file metadata.",
 ) {
   return new Promise((resolve, reject) => {
     const child = spawn(binary, args, {
@@ -343,7 +343,7 @@ function run(
       reject(
         bad(
           signal
-            ? `${fallback} Превышено время ожидания.`
+            ? `${fallback} The operation timed out.`
             : stderr.trim() || fallback,
         ),
       );
@@ -369,7 +369,7 @@ function runCapture(binary, args) {
     child.on("close", (code) =>
       code === 0
         ? resolve(stdout)
-        : reject(bad(stderr.trim() || "Не удалось проверить C2PA.")),
+        : reject(bad(stderr.trim() || "Could not inspect C2PA data.")),
     );
   });
 }
@@ -386,7 +386,7 @@ export function installMetadata(app, { processor, outputDir }) {
   app.post("/api/metadata/apply", upload, async (req, res) => {
     const generated = req.files?.generated?.[0];
     const reference = req.files?.reference?.[0];
-    if (!generated) throw bad("Добавьте видео или изображение для обработки.");
+    if (!generated) throw bad("Add a video or image to process.");
     const includeLocation = req.body.includeLocation === "true";
     const clearExisting = req.body.clearExisting !== "false";
     const removeC2pa = req.body.removeC2pa !== "false";
@@ -400,7 +400,7 @@ export function installMetadata(app, { processor, outputDir }) {
       removeSound,
     });
     if (result.buffer.length > 60 * 1024 * 1024)
-      throw bad("Готовый файл превышает лимит 60 МБ.");
+      throw bad("The output file exceeds the 60 MB limit.");
     const id = randomUUID();
     const ext = result.ext || "mp4";
     const mime = result.mime || "video/mp4";
@@ -432,18 +432,18 @@ export function installMetadata(app, { processor, outputDir }) {
     });
   });
   app.get("/api/metadata/:id/content", async (req, res) => {
-    if (!idPattern.test(req.params.id)) throw bad("Файл не найден.", 404);
+    if (!idPattern.test(req.params.id)) throw bad("File not found.", 404);
     try {
       var metadata = JSON.parse(
         await readFile(path.join(root, `${req.params.id}.json`), "utf8"),
       );
     } catch {
-      throw bad("Файл не найден.", 404);
+      throw bad("File not found.", 404);
     }
     const ext = metadata.ext || "mp4";
     const mime = mimeByExt[ext];
     if (!mime)
-      throw bad("Файл не найден.", 404);
+      throw bad("File not found.", 404);
     const file = path.join(root, `${req.params.id}.${ext}`);
     if (req.query.download === "1")
       return res.download(file, `cleaned-media.${ext}`);

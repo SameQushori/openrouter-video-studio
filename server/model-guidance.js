@@ -17,47 +17,47 @@ export function modelGuidance(id) {
   const notes = [];
   if (id.startsWith("bytedance/seedance"))
     notes.push(
-      "Генерация людей из текста поддерживается. Референс с узнаваемым реальным человеком может быть отклонён privacy/safety-фильтром провайдера; возможны ложные срабатывания.",
+      "Generating people from text is supported. A reference containing an identifiable real person may be rejected by the provider's privacy or safety filter; false positives are possible.",
     );
   if (id === "bytedance/seedance-2.0-fast")
     notes.push(
-      "Мультимодальные изображения и видео подтверждены, но видеореференс требует поддерживающего маршрута провайдера. Перенос движения 1:1 не гарантируется.",
+      "Multimodal images and video are confirmed, but video references require a compatible provider route. One-to-one motion transfer is not guaranteed.",
     );
   if (id === "minimax/hailuo-3")
     notes.push(
-      "OpenRouter прямо указывает video-to-video motion transfer. В Studio загрузите обязательное видео движения и при необходимости изображение персонажа. Отдельного подтверждённого параметра силы переноса в нормализованном API нет.",
+      "OpenRouter explicitly lists video-to-video motion transfer. Upload the required motion video and an optional character image in Studio. The normalized API has no separately confirmed transfer-strength parameter.",
     );
   if (id === "minimax/hailuo-3-max")
     notes.push(
-      "H3 Max поддерживает text-to-video, image-to-video и первый/последний кадр, но OpenRouter не заявляет для неё video-to-video Motion Control. Для переноса движения выберите обычную MiniMax H3.",
+      "H3 Max supports text-to-video, image-to-video, and first/last frames, but OpenRouter does not list video-to-video Motion Control for it. Choose the standard MiniMax H3 for motion transfer.",
     );
   if (["bytedance/seedance-2.0", "bytedance/seedance-2.0-mini", "bytedance/seedance-2.5"].includes(id))
     notes.push(
-      "Видео можно передать как мультимодальный референс для движения. Это reference guidance, а не гарантированный покадровый motion transfer; отдельный strength-параметр OpenRouter не публикует.",
+      "Video can be supplied as a multimodal motion reference. This is reference guidance, not guaranteed frame-by-frame motion transfer; OpenRouter does not publish a separate strength parameter.",
     );
   if (id === "alibaba/wan-3.0")
     notes.push(
-      "Поддерживается reference-guided video с изображениями: в Studio можно добавить до 4 image references. Видеореференс для этой модели не заявлен.",
+      "Reference-guided video with images is supported: Studio allows up to four image references. Video reference is not listed for this model.",
     );
   if (id === "alibaba/wan-3.0-prime")
     notes.push(
-      "Для Wan 3.0 Prime OpenRouter заявляет text-to-video и first-frame image-to-video. Несколько референсных изображений и видеореференс не подтверждены, поэтому первый кадр имеет лимит 1/1.",
+      "For Wan 3.0 Prime, OpenRouter lists text-to-video and first-frame image-to-video. Multiple image references and video reference are not confirmed, so first-frame input is limited to 1/1.",
     );
   if (id === "bytedance/seedance-2.5")
     notes.push(
-      "Модель поддерживает многомодальные референсы; в Studio доступно до 4 изображений и видео на одну задачу. Страница модели указывает больший провайдерский предел, но Studio пока намеренно ограничивает отправку четырьмя.",
+      "The model supports multimodal references. Studio allows up to four images or videos per job. The model page lists a higher provider limit, but Studio currently caps submissions at four.",
     );
   if (id.startsWith("kwaivgi/kling-"))
     notes.push(
-      "На текущем маршруте Kling действует предел промпта 2 500 символов. Длинный JSON лучше сократить до сцены, действий, камеры и света.",
+      "The current Kling route has a 2,500-character prompt limit. Reduce long JSON to the scene, actions, camera, and lighting.",
     );
   if (id.startsWith("google/veo-3.1"))
     notes.push(
-      "Длительность выбирается только из опубликованных значений. 4K и звук доступны лишь там, где они показаны в параметрах выбранной версии.",
+      "Duration can only be selected from published values. 4K and audio are available only when listed for the selected model version.",
     );
   if (id === "openai/sora-2-pro")
     notes.push(
-      "В текущем каталоге не опубликован first-frame input, поэтому Studio показывает только подтверждённые режимы.",
+      "The current catalog does not list first-frame input, so Studio only shows confirmed modes.",
     );
   return {
     stars: ratings[id] || 0,

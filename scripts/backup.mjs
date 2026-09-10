@@ -25,5 +25,5 @@ await writeFile(
   "Backup of local Video Studio data and bundled prompts. The .env file and API keys are intentionally excluded.\n",
   "utf8",
 );
-console.log(`Резервная копия создана: ${destination}`);
-console.log("API key и .env намеренно не копировались.");
+console.log(`Backup created: ${destination}`);
+console.log("The API key and .env were intentionally excluded.");

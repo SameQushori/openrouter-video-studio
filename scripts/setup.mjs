@@ -34,7 +34,7 @@ async function secret(question) {
     const onData = (character) => {
       if (character === "\u0003") {
         stdin.setRawMode(false);
-        reject(new Error("Настройка отменена."));
+        reject(new Error("Setup cancelled."));
       } else if (character === "\r" || character === "\n") finish();
       else if (character === "\u007f" || character === "\b") {
         if (value) {
@@ -52,15 +52,15 @@ async function secret(question) {
 
 const [nodeMajor, nodeMinor] = process.versions.node.split(".").map(Number);
 if (nodeMajor < 22 || (nodeMajor === 22 && nodeMinor < 13))
-  throw new Error("Нужен Node.js 22.13 или новее.");
+  throw new Error("Node.js 22.13 or newer is required.");
 
 if (!(await exists(envFile))) await copyFile(exampleFile, envFile);
 const current = await readEnv(envFile);
 const rl = createInterface({ input: stdin, output: stdout });
 
-console.log("\nVideo Studio · первоначальная настройка\n");
+console.log("\nVideo Studio · first-time setup\n");
 const demoAnswer = await rl.question(
-  `Режим без списаний для проверки? [${current.DEMO_MODE === "true" ? "Y/n" : "y/N"}]: `,
+  `Use no-charge demo mode? [${current.DEMO_MODE === "true" ? "Y/n" : "y/N"}]: `,
 );
 const demo = demoAnswer.trim()
   ? /^y(es)?$/i.test(demoAnswer.trim())
@@ -68,16 +68,16 @@ const demo = demoAnswer.trim()
 rl.close();
 
 let apiKey = current.OPENROUTER_API_KEY || "";
-if (!demo && !apiKey) apiKey = await secret("Вставьте OpenRouter API key: ");
+if (!demo && !apiKey) apiKey = await secret("Paste your OpenRouter API key: ");
 if (!demo && !apiKey)
   throw new Error(
-    "Ключ не введён. Добавьте OPENROUTER_API_KEY в .env или включите DEMO_MODE=true.",
+    "No key was entered. Add OPENROUTER_API_KEY to .env or set DEMO_MODE=true.",
   );
 
 await updateEnv(envFile, {
   DEMO_MODE: demo ? "true" : "false",
   OPENROUTER_API_KEY: apiKey,
 });
-console.log("\nНастройка сохранена локально в .env. Ключ не выводился и не отправлялся.");
-console.log("Запуск: npm start");
-console.log("Видеореференсы: npm run setup:worker\n");
+console.log("\nSetup was saved locally in .env. The key was neither printed nor sent anywhere.");
+console.log("Start: npm start");
+console.log("Video references: npm run setup:worker\n");

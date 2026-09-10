@@ -17,24 +17,24 @@ const env = await readEnv(path.join(root, ".env"));
 if (!ci) {
   const demo = env.DEMO_MODE === "true";
   add(
-    "Конфигурация",
+    "Configuration",
     demo || Boolean(env.OPENROUTER_API_KEY),
-    demo ? "demo без списаний" : env.OPENROUTER_API_KEY ? "ключ задан" : "нет ключа",
+    demo ? "no-charge demo" : env.OPENROUTER_API_KEY ? "key configured" : "no key",
   );
 }
 
 try {
   await access(ffmpegPath, constants.X_OK);
-  add("FFmpeg", true, "встроен");
+  add("FFmpeg", true, "bundled");
 } catch {
-  add("FFmpeg", false, "исполняемый файл не найден");
+  add("FFmpeg", false, "executable not found");
 }
 
 try {
   await import("exiftool-vendored");
-  add("ExifTool", true, "встроен");
+  add("ExifTool", true, "bundled");
 } catch {
-  add("ExifTool", false, "пакет не загружается");
+  add("ExifTool", false, "package could not be loaded");
 }
 
 try {
@@ -43,16 +43,16 @@ try {
   const probe = path.join(dataRoot, ".write-test");
   await writeFile(probe, "ok");
   await rm(probe);
-  add("Локальные данные", true, dataRoot);
+  add("Local data", true, dataRoot);
 } catch (error) {
-  add("Локальные данные", false, error.message);
+  add("Local data", false, error.message);
 }
 
 try {
   await access(path.join(root, "dist", "index.html"));
-  add("Интерфейс", true, "собран");
+  add("Interface", true, "built");
 } catch {
-  add("Интерфейс", ci, ci ? "сборка проверяется отдельно" : "выполните npm run build");
+  add("Interface", ci, ci ? "build is validated separately" : "run npm run build");
 }
 
 for (const check of checks)

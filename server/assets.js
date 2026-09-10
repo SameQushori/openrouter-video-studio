@@ -8,7 +8,7 @@ export function publicUrl(value) {
   try {
     u = new URL(value);
   } catch {
-    throw bad("Введите прямую HTTPS-ссылку на файл.");
+    throw bad("Enter a direct HTTPS URL for the file.");
   }
   if (
     u.protocol !== "https:" ||
@@ -21,7 +21,7 @@ export function publicUrl(value) {
     u.hostname.endsWith(".local") ||
     u.hostname.includes(":")
   )
-    throw bad("Нужна публичная HTTPS-ссылка без пароля.");
+    throw bad("A public HTTPS URL without credentials is required.");
   return u.href;
 }
 export function createAssets(dir, baseUrl = "", demo = false, mediaWorker = {}) {
@@ -37,16 +37,16 @@ export function createAssets(dir, baseUrl = "", demo = false, mediaWorker = {}) 
   }).single("file");
   async function saveVideo(buffer, name, extra = {}) {
     if (!Buffer.isBuffer(buffer) || buffer.length < 12)
-      throw bad("Скачанный файл пуст или повреждён.");
+      throw bad("The downloaded file is empty or damaged.");
     if (buffer.length > 25 * 1024 * 1024)
-      throw bad("Максимальный размер видео — 25 МБ.");
+      throw bad("Maximum video size is 25 MB.");
     if (
       buffer.toString("ascii", 4, 8) !== "ftyp" ||
       !/^(isom|iso2|mp41|mp42|avc1|M4V )$/.test(
         buffer.toString("ascii", 8, 12),
       )
     )
-      throw bad("TikTok вернул файл не в формате MP4.");
+      throw bad("TikTok returned a file that is not MP4.");
     const id = randomUUID();
     const asset = {
       id,
@@ -65,7 +65,7 @@ export function createAssets(dir, baseUrl = "", demo = false, mediaWorker = {}) 
   }
   async function accept(req, res) {
     const f = req.file;
-    if (!f) throw bad("Выберите файл.");
+    if (!f) throw bad("Select a file.");
     const b = f.buffer;
     let mime, ext, kind;
     if (
@@ -94,7 +94,7 @@ export function createAssets(dir, baseUrl = "", demo = false, mediaWorker = {}) 
       kind = "video";
     } else
       throw bad(
-        "Поддерживаются PNG, JPEG, WebP и MP4. Формат файла не распознан.",
+        "PNG, JPEG, WebP, and MP4 are supported. The file format was not recognized.",
       );
     const id = randomUUID();
     const asset = {
@@ -114,14 +114,14 @@ export function createAssets(dir, baseUrl = "", demo = false, mediaWorker = {}) 
   async function resolve(item) {
     if (item.url) return { kind: item.kind, url: publicUrl(item.url) };
     if (!/^[a-f0-9-]{36}$/.test(item.assetId || ""))
-      throw bad("Некорректный ID файла.");
+      throw bad("Invalid file ID.");
     let asset;
     try {
       asset = JSON.parse(
         await readFile(path.join(root, `${item.assetId}.json`), "utf8"),
       );
     } catch {
-      throw bad("Файл не найден. Загрузите его снова.");
+      throw bad("File not found. Upload it again.");
     }
     if (!base && asset.kind === "image") {
       const bytes = await readFile(path.join(root, asset.file));
@@ -145,15 +145,15 @@ export function createAssets(dir, baseUrl = "", demo = false, mediaWorker = {}) 
           signal: AbortSignal.timeout(120000),
         });
       } catch {
-        throw bad("Не удалось загрузить MP4 в защищённое временное хранилище Cloudflare.");
+        throw bad("Could not upload the MP4 to protected temporary Cloudflare storage.");
       }
       const result = await response.json().catch(() => ({}));
       if (!response.ok || !result.url)
-        throw bad(result.error || "Cloudflare не принял MP4.");
+        throw bad(result.error || "Cloudflare rejected the MP4.");
       return { kind: asset.kind, url: publicUrl(result.url) };
     }
     if (!base && asset.kind === "video")
-      throw bad("Для локального MP4 нужен PUBLIC_ASSET_BASE_URL или MEDIA_WORKER_URL.");
+      throw bad("A local MP4 requires PUBLIC_ASSET_BASE_URL or MEDIA_WORKER_URL.");
     return {
       kind: asset.kind,
       url: `${base || "https://demo.invalid"}/media/${asset.file}`,
@@ -174,7 +174,7 @@ export async function attachAssets(input, model, payload, assets) {
   const items = input.references || [];
   const maxReferences = model.maxReferences ?? 4;
   if (!Array.isArray(items) || items.length > maxReferences)
-    throw bad(`Максимум ${maxReferences} референса(ов) для этой модели в Studio.`);
+    throw bad(`Studio allows at most ${maxReferences} references for this model.`);
   const legacyMotion = input.referenceMode === "character_motion";
   const motion = input.referenceMode === "motion_control";
   const imageCount = Array.isArray(items)
@@ -185,20 +185,20 @@ export async function attachAssets(input, model, payload, assets) {
     : 0;
   if (legacyMotion && (input.firstFrame || items.length !== 2 ||
       !model.references.includes("image") || !model.references.includes("video")))
-    throw bad("Для старого режима «Персонаж + видео» нужны два референса и модель с поддержкой изображений и видео.");
+    throw bad("The legacy Character + Video mode requires two references and a model that supports both images and video.");
   if (motion && (input.firstFrame || !model.motionControl ||
       !model.references.includes("video") || videoCount !== 1 ||
       imageCount > 1 || items.length !== imageCount + videoCount))
-    throw bad("Для управления движением нужно ровно одно видео; можно дополнительно добавить одно изображение персонажа.");
+    throw bad("Motion control requires exactly one video; one optional character image can also be added.");
   if (input.firstFrame && items.length)
     throw bad(
-      "Выберите первый кадр или референсы, не оба режима одновременно.",
+      "Choose either a first frame or references, not both.",
     );
   if (input.firstFrame) {
     if (!model.frames.includes("first_frame"))
-      throw bad("Модель не поддерживает первый кадр.");
+      throw bad("This model does not support first-frame input.");
     const a = await assets.resolve(input.firstFrame);
-    if (a.kind !== "image") throw bad("Первый кадр должен быть изображением.");
+    if (a.kind !== "image") throw bad("The first frame must be an image.");
     payload.frame_images = [
       {
         type: "image_url",
@@ -212,19 +212,19 @@ export async function attachAssets(input, model, payload, assets) {
     for (const item of items) {
       const a = await assets.resolve(item);
       if (!model.references.includes(a.kind))
-        throw bad("Поддержка этого типа референса не подтверждена для модели.");
+        throw bad("This reference type is not confirmed for the selected model.");
       const type = `${a.kind}_url`;
       payload.input_references.push({ type, [type]: { url: a.url } });
     }
     if (legacyMotion && (payload.input_references[0].type !== "image_url" ||
         payload.input_references[1].type !== "video_url"))
-      throw bad("Первый референс должен быть изображением персонажа, второй — видео движений.");
+      throw bad("The first reference must be a character image and the second a motion video.");
     if (motion) {
       const resolvedVideos = payload.input_references.filter((item) => item.type === "video_url").length;
       const resolvedImages = payload.input_references.filter((item) => item.type === "image_url").length;
       if (resolvedVideos !== 1 || resolvedImages > 1 ||
           resolvedVideos + resolvedImages !== payload.input_references.length)
-        throw bad("Фактические типы файлов не подходят для управления движением.");
+        throw bad("The detected file types are not valid for motion control.");
     }
   }
   return payload;

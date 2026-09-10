@@ -49,7 +49,7 @@ export function normalizeModel(raw, overrides = {}) {
 export function validateRequest(input, model) {
   if (!model)
     throw Object.assign(
-      new Error("Модель отсутствует в актуальном каталоге."),
+      new Error("The model is not present in the current catalog."),
       { status: 400 },
     );
   const fail = (message) => {
@@ -63,7 +63,7 @@ export function validateRequest(input, model) {
     !input.prompt.trim() ||
     promptLength > promptLimit
   )
-    fail(`Введите описание: от 1 до ${promptLimit} символов.`);
+    fail(`Enter a description between 1 and ${promptLimit} characters.`);
   const out = { model: model.id, prompt: input.prompt.trim() };
   for (const [key, values] of [
     ["duration", model.durations],
@@ -72,13 +72,13 @@ export function validateRequest(input, model) {
   ]) {
     if (input[key] !== undefined && input[key] !== "") {
       if (!values.includes(input[key]))
-        fail(`Недопустимый параметр ${key}. Обновите каталог.`);
+        fail(`Unsupported parameter: ${key}. Refresh the catalog.`);
       out[key] = input[key];
     }
   }
   if (input.generate_audio !== undefined) {
     if (!model.audio || typeof input.generate_audio !== "boolean")
-      fail("Настройка аудио не поддерживается.");
+      fail("Audio configuration is not supported.");
     out.generate_audio = input.generate_audio;
   }
   return out;

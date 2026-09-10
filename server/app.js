@@ -20,12 +20,12 @@ export function createApp({
   mediaWorker = {},
   collectionStore = store,
   tiktokDownloader = async () => {
-    throw Object.assign(new Error("Загрузчик TikTok не установлен."), {
+    throw Object.assign(new Error("The TikTok downloader is not installed."), {
       status: 503,
     });
   },
   metadataProcessor = async () => {
-    throw Object.assign(new Error("ExifTool не установлен."), { status: 503 });
+    throw Object.assign(new Error("ExifTool is not installed."), { status: 503 });
   },
   metadataDir = path.resolve("data/metadata"),
 }) {
@@ -48,7 +48,7 @@ export function createApp({
   app.use((req, res, next) => {
     const host = req.hostname;
     if (!["localhost", "127.0.0.1", "::1"].includes(host))
-      return res.status(403).json({ error: "Только локальный доступ." });
+      return res.status(403).json({ error: "Local access only." });
     const origin = req.get("origin");
     if (
       origin &&
@@ -58,7 +58,7 @@ export function createApp({
         `http://${req.get("host")}`,
       ].includes(origin)
     )
-      return res.status(403).json({ error: "Недопустимый источник запроса." });
+      return res.status(403).json({ error: "Request origin is not allowed." });
     res.set("X-Content-Type-Options", "nosniff");
     next();
   });
@@ -73,7 +73,7 @@ export function createApp({
     if (!catalog || Date.now() - catalogAt > 300000) {
       const raw = await provider.models();
       if (!Array.isArray(raw))
-        throw new Error("Некорректный каталог OpenRouter.");
+        throw new Error("Invalid OpenRouter catalog.");
       catalog = raw.map((m) => normalizeModel(m, overrides));
       catalogAt = Date.now();
     }
@@ -147,7 +147,7 @@ export function createApp({
     if (!job || !job.remoteId || terminal.has(job.status))
       return res
         .status(400)
-        .json({ error: "Нет активного задания для проверки." });
+        .json({ error: "There is no active job to poll." });
     Object.assign(job, {
       pollPaused: false,
       pollCount: 0,
@@ -161,7 +161,7 @@ export function createApp({
     const job = store.get(req.params.id);
     if (!job) {
       if (!/^[a-zA-Z0-9-]{10,100}$/.test(req.params.id))
-        return res.status(404).json({ error: "Задание не найдено." });
+        return res.status(404).json({ error: "Job not found." });
       if (earlyCancellations.size >= 100)
         earlyCancellations.delete(earlyCancellations.values().next().value);
       earlyCancellations.add(req.params.id);
@@ -171,13 +171,13 @@ export function createApp({
         cancelledAt: new Date().toISOString(),
         cancellationScope: "before_submission",
         cancellationNote:
-          "Отправка остановлена до передачи задания провайдеру.",
+          "Submission stopped before the job was sent to the provider.",
       });
     }
     if (job.status === "cancelled") return res.json(job);
     if (terminal.has(job.status))
       return res.status(400).json({
-        error: "Завершённое задание уже нельзя отменить.",
+        error: "A completed job cannot be cancelled.",
       });
     Object.assign(job, {
       status: "cancelled",
@@ -185,7 +185,7 @@ export function createApp({
       pollPaused: true,
       cancellationScope: "local_tracking",
       cancellationNote:
-        "Studio прекратила проверку. OpenRouter не предоставляет API отмены video job, поэтому уже принятая генерация может продолжиться и списать средства.",
+        "Studio stopped polling. OpenRouter does not provide a video-job cancellation API, so an accepted generation may continue and incur charges.",
     });
     store.put(job);
     res.json(job);
@@ -193,7 +193,7 @@ export function createApp({
   app.post("/api/jobs", async (req, res) => {
     const key = req.get("Idempotency-Key");
     if (!key || !/^[a-zA-Z0-9-]{10,100}$/.test(key))
-      return res.status(400).json({ error: "Требуется ключ запроса." });
+      return res.status(400).json({ error: "An idempotency key is required." });
     const existing = store.get(key);
     if (existing) return res.json(existing);
     const model = (await models()).find((m) => m.id === req.body.model);
@@ -222,7 +222,7 @@ export function createApp({
             cancelledAt: new Date().toISOString(),
             cancellationScope: "before_submission",
             cancellationNote:
-              "Отправка остановлена до передачи задания провайдеру.",
+              "Submission stopped before the job was sent to the provider.",
           }
         : {}),
     };
@@ -233,7 +233,7 @@ export function createApp({
       if (typeof remote.id !== "string" || !remote.id)
         throw Object.assign(
           new Error(
-            "OpenRouter не вернул ID. Проверьте кабинет перед повтором.",
+            "OpenRouter did not return a job ID. Check your account before retrying.",
           ),
           { uncertain: true },
         );
@@ -265,7 +265,7 @@ export function createApp({
   app.get("/api/jobs/:id/content", async (req, res) => {
     const job = store.get(req.params.id);
     if (!job || job.status !== "completed")
-      return res.status(404).json({ error: "Готовое видео не найдено." });
+      return res.status(404).json({ error: "The completed video was not found." });
     const result = await provider.content(job.remoteId, req.get("range"));
     if (result.demo) {
       if (req.query.download === "1")
@@ -289,7 +289,7 @@ export function createApp({
   app.use(express.static(distDir));
   app.get("/", (req, res) => res.sendFile(path.join(distDir, "index.html")));
   app.use("/api", (req, res) =>
-    res.status(404).json({ error: "Маршрут не найден." }),
+    res.status(404).json({ error: "Route not found." }),
   );
   app.use((err, req, res, next) => {
     if (res.headersSent) return next(err);
@@ -298,11 +298,11 @@ export function createApp({
       error:
         status === 413
           ? req.originalUrl.startsWith("/api/metadata/")
-            ? "Можно загрузить два медиафайла размером до 50 МБ каждый."
-            : "Максимум один файл размером до 25 МБ."
+            ? "You can upload two media files up to 50 MB each."
+            : "At most one file up to 25 MB is allowed."
           : err.status
             ? err.message
-            : "Ошибка сервера. Проверьте настройки и повторите чтение.",
+            : "Server error. Check the configuration and try again.",
     });
   });
   let busy = false;
@@ -337,7 +337,7 @@ export function createApp({
               "expired",
             ].includes(remote.status)
           )
-            throw new Error("Неизвестный статус OpenRouter.");
+            throw new Error("Unknown OpenRouter status.");
           Object.assign(job, {
             status: remote.status,
             usage: remote.usage,
@@ -366,7 +366,7 @@ export function createApp({
     if (job.status === "submitting") {
       job.status = "submission_unknown";
       job.error =
-        "Отправка прервана. Проверьте кабинет OpenRouter перед повтором.";
+        "Submission was interrupted. Check your OpenRouter account before retrying.";
       store.put(job);
     }
   const timer = setInterval(

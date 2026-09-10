@@ -3,15 +3,15 @@ import seedanceTemplate from "./analysis-prompt.txt?raw";
 import universalTemplate from "./analysis-universal-prompt.txt?raw";
 import { extractGenerationPrompts } from "./analysis-result.js";
 const status = {
-  analyzing: "Gemini анализирует…",
-  completed: "Готово",
-  failed: "Ошибка",
-  submission_unknown: "Проверьте расходы перед повтором",
+  analyzing: "Gemini is analyzing…",
+  completed: "Completed",
+  failed: "Failed",
+  submission_unknown: "Check usage before retrying",
 };
 async function api(url, options) {
   const r = await fetch(url, options);
   const b = await r.json();
-  if (!r.ok) throw new Error(b.error || "Ошибка запроса");
+  if (!r.ok) throw new Error(b.error || "Request failed");
   return b;
 }
 export function Analysis({ onUse }) {
@@ -66,7 +66,7 @@ export function Analysis({ onUse }) {
     e.target.value = "";
     if (!file) return;
     if (file.size > 25 * 1024 * 1024) {
-      setError("Максимум 25 МБ.");
+      setError("Maximum 25 MB.");
       return;
     }
     setBusy(true);
@@ -75,7 +75,7 @@ export function Analysis({ onUse }) {
       const form = new FormData();
       form.append("file", file);
       const a = await api("/api/uploads", { method: "POST", body: form });
-      if (a.kind !== "video") throw new Error("Нужен MP4.");
+      if (a.kind !== "video") throw new Error("An MP4 file is required.");
       setAsset(a);
       setTikTokAsset(null);
     } catch (e) {
@@ -146,7 +146,7 @@ export function Analysis({ onUse }) {
     output = Number(model?.pricing?.completion);
   function estimate(seconds) {
     if (!Number.isFinite(input) || !Number.isFinite(output))
-      return "Нет тарифа";
+      return "Pricing unavailable";
     const p = Math.ceil(prompt.length / 4);
     const outputLow = quality === "max" ? 3000 : 2000,
       outputHigh = quality === "max" ? 12000 : 6000,
@@ -160,9 +160,9 @@ export function Analysis({ onUse }) {
     <div className="workspace analysisWorkspace">
       <section>
         <div className="sectionTitle">
-          <span className="eyebrow">ВИДЕО → JSON-ПРОМПТ</span>
+          <span className="eyebrow">VIDEO → JSON PROMPT</span>
         </div>
-        <h1>Разобрать референс.</h1>
+        <h1>Analyze a reference.</h1>
         <form onSubmit={submit}>
           <label>
             Gemini
@@ -171,7 +171,7 @@ export function Analysis({ onUse }) {
               onChange={(e) => setModel(e.target.value)}
               disabled={busy}
             >
-              {!models.length && <option>Загрузка моделей…</option>}
+              {!models.length && <option>Loading models…</option>}
               {models.map((m) => (
                 <option key={m.id} value={m.id}>
                   {m.name}
@@ -180,18 +180,18 @@ export function Analysis({ onUse }) {
             </select>
           </label>
           <label>
-            Точность анализа
+            Analysis quality
             <select
               value={quality}
               onChange={(e) => setQuality(e.target.value)}
               disabled={busy}
             >
-              <option value="max">Максимальная · больше времени и токенов</option>
-              <option value="standard">Стандартная · дешевле</option>
+              <option value="max">Maximum · more time and tokens</option>
+              <option value="standard">Standard · lower cost</option>
             </select>
           </label>
           <label>
-            Исходное видео · MP4 до 25 МБ
+            Source video · MP4 up to 25 MB
             <input
               type="file"
               accept="video/mp4"
@@ -201,7 +201,7 @@ export function Analysis({ onUse }) {
           </label>
           <div className="tiktokImport">
             <label>
-              Или ссылка на видео TikTok
+              Or a TikTok video URL
               <input
                 type="url"
                 inputMode="url"
@@ -221,19 +221,19 @@ export function Analysis({ onUse }) {
                 onClick={() => importTikTok(false)}
                 disabled={busy || !tiktok.trim()}
               >
-                Загрузить для анализа
+                Import for analysis
               </button>
               <button
                 type="button"
                 onClick={() => importTikTok(true)}
                 disabled={busy || !tiktok.trim()}
               >
-                Скачать MP4
+                Download MP4
               </button>
             </div>
             <small>
-              Работают публичные ролики. TikTok иногда ограничивает загрузку по
-              региону или требует вход в аккаунт.
+              Public videos are supported. TikTok may restrict downloads by
+              region or require an account.
             </small>
           </div>
           {asset && (
@@ -247,18 +247,18 @@ export function Analysis({ onUse }) {
             </>
           )}
           <div className="promptToolbar">
-            <span>Промпт для анализа</span>
+            <span>Analysis prompt</span>
             <div className="templateActions">
               <button type="button" onClick={() => setPrompt(universalTemplate)}>
-                Универсальный · Wan + H3
+                Universal · Wan + H3
               </button>
               <button type="button" onClick={() => setPrompt(seedanceTemplate)}>
-                Старый Seedance
+                Legacy Seedance
               </button>
             </div>
           </div>
           <textarea
-            aria-label="Промпт для анализа"
+            aria-label="Analysis prompt"
             rows={12}
             value={prompt}
             onChange={(e) => setPrompt(e.target.value)}
@@ -266,24 +266,24 @@ export function Analysis({ onUse }) {
             required
           />
           <p className="hint">
-            Универсальный шаблон делает одну точную транскрипцию и сразу готовит
-            отдельные промпты для Wan, MiniMax H3 с первым кадром и H3 Motion.
-            Неясные слова должны помечаться как [inaudible], но результат всё
-            равно стоит проверить перед платной генерацией.
+            The universal template produces one detailed transcription plus
+            separate prompts for Wan, MiniMax H3 with a first frame, and H3
+            Motion. Unclear speech is marked as [inaudible]; review the result
+            before paid generation.
           </p>
           <div className="estimate">
-            <strong>Оценка одного анализа</strong>
+            <strong>Estimated cost per analysis</strong>
             <div>
               {[5, 10, 15].map((s) => (
                 <p key={s}>
-                  {s} сек <b>{estimate(s)}</b>
+                  {s} sec <b>{estimate(s)}</b>
                 </p>
               ))}
             </div>
             <small>
-              Ориентир: 100–300 входных токенов/сек видео, промпт ≈ символы/4,
-              3000–12000 выходных токенов вместе с рассуждением. Это не лимит
-              расходов; детализация и обработка видео меняют сумму.
+              Estimate: 100–300 input tokens/sec of video, prompt ≈ characters/4,
+              and 3,000–12,000 output tokens including reasoning. This is not a
+              spending cap; detail level and video processing affect the total.
             </small>
           </div>
           <button
@@ -291,10 +291,10 @@ export function Analysis({ onUse }) {
             disabled={busy || active || !model || !asset || !prompt.trim()}
           >
             {busy
-              ? "Подождите…"
+              ? "Please wait…"
               : active
-                ? "Идёт анализ…"
-                : "Анализировать · платный запрос"}
+                ? "Analyzing…"
+                : "Analyze · paid request"}
           </button>
         </form>
         {error && (
@@ -305,23 +305,20 @@ export function Analysis({ onUse }) {
       </section>
       <section>
         <div className="sectionTitle">
-          <span className="eyebrow">РЕЗУЛЬТАТ GEMINI</span>
+          <span className="eyebrow">GEMINI RESULT</span>
           <span aria-live="polite">
-            {job ? status[job.status] : "Нет анализа"}
+            {job ? status[job.status] : "No analysis"}
           </span>
         </div>
         {!job ? (
           <div className="empty">
-            <h2>Здесь появится JSON</h2>
-            <p>
-              Загрузите видео и нажмите «Анализировать». Публичная ссылка не
-              нужна.
-            </p>
+            <h2>The JSON result will appear here</h2>
+            <p>Upload a video and select Analyze. No public URL is required.</p>
           </div>
         ) : (
           <>
             <p className="hint">
-              {job.model} · {new Date(job.createdAt).toLocaleString("ru")}
+              {job.model} · {new Date(job.createdAt).toLocaleString("en-US")}
             </p>
             {job.error && <p className="error">{job.error}</p>}
             {job.warning && <p className="error">{job.warning}</p>}
@@ -329,7 +326,7 @@ export function Analysis({ onUse }) {
               <>
                 <textarea
                   className="jsonResult"
-                  aria-label="Результат анализа"
+                  aria-label="Analysis result"
                   value={job.result}
                   readOnly
                   rows={24}
@@ -344,16 +341,16 @@ export function Analysis({ onUse }) {
                         setTimeout(() => setCopied(false), 2000);
                       } catch {
                         setError(
-                          "Не удалось скопировать. Выделите текст результата вручную.",
+                          "Could not copy the result. Select and copy it manually.",
                         );
                       }
                     }}
                   >
-                    {copied ? "Скопировано" : "Копировать"}
+                    {copied ? "Copied" : "Copy"}
                   </button>
                   {generated.wan && (
                     <button type="button" onClick={() => onUse(generated.wan, "wan")}>
-                      В Wan →
+                      Use in Wan →
                     </button>
                   )}
                   {generated.minimaxImage && (
@@ -361,7 +358,7 @@ export function Analysis({ onUse }) {
                       type="button"
                       onClick={() => onUse(generated.minimaxImage, "minimax-image")}
                     >
-                      В H3 · кадр →
+                      Use in H3 · frame →
                     </button>
                   )}
                   {generated.minimaxMotion && (
@@ -369,7 +366,7 @@ export function Analysis({ onUse }) {
                       type="button"
                       onClick={() => onUse(generated.minimaxMotion, "minimax-motion")}
                     >
-                      В H3 · Motion →
+                      Use in H3 · Motion →
                     </button>
                   )}
                   {!generated.wan && !generated.minimaxImage && (
@@ -378,33 +375,33 @@ export function Analysis({ onUse }) {
                       disabled={!job.jsonValid || job.result.length > 10000}
                       onClick={() => onUse(job.result)}
                     >
-                      В генератор видео →
+                      Use in video generator →
                     </button>
                   )}
                 </div>
                 {job.result.length > 10000 && (
                   <p className="hint">
-                    JSON длиннее лимита промпта генератора (10000 символов).
-                    Сократите его перед переносом.
+                    The JSON exceeds the generator's 10,000-character prompt
+                    limit. Shorten it before transferring.
                   </p>
                 )}
               </>
             )}
             {job.usage && (
               <p className="hint">
-                Стоимость:{" "}
+                Cost:{" "}
                 {typeof job.usage.cost === "number"
                   ? `$${job.usage.cost.toFixed(5)}`
-                  : "не возвращена API"}{" "}
-                · Вход: {job.usage.prompt_tokens ?? "—"} токенов · Выход:{" "}
-                {job.usage.completion_tokens ?? "—"} · Рассуждение:{" "}
+                  : "not returned by the API"}{" "}
+                · Input: {job.usage.prompt_tokens ?? "—"} tokens · Output:{" "}
+                {job.usage.completion_tokens ?? "—"} · Reasoning:{" "}
                 {job.usage.completion_tokens_details?.reasoning_tokens ?? "—"}
               </p>
             )}
           </>
         )}
         <div className="history">
-          <h2>История анализов</h2>
+          <h2>Analysis history</h2>
           <div className="historyList" tabIndex="0">
             {jobs.map((j) => (
               <button
@@ -417,7 +414,7 @@ export function Analysis({ onUse }) {
               >
                 <span className="historyText">
                   <strong>{j.model}</strong>
-                  <small>{new Date(j.createdAt).toLocaleString("ru")}</small>
+                  <small>{new Date(j.createdAt).toLocaleString("en-US")}</small>
                 </span>
                 <span>{status[j.status]}</span>
               </button>

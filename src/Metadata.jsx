@@ -7,7 +7,7 @@ async function send(form) {
   });
   const body = await response.json();
   if (!response.ok)
-    throw new Error(body.error || "Не удалось перенести метаданные.");
+    throw new Error(body.error || "Could not process metadata.");
   return body;
 }
 
@@ -29,16 +29,16 @@ function FilePreview({ file, onClear }) {
       {file.type.startsWith("video/") ? (
         <video src={url} muted controls />
       ) : file.type.startsWith("image/") ? (
-        <img src={url} alt="Предпросмотр эталона" />
+        <img src={url} alt="Reference preview" />
       ) : (
-        <div className="metadataFallback">Предпросмотр недоступен</div>
+        <div className="metadataFallback">Preview unavailable</div>
       )}
       <div>
         <strong>{file.name}</strong>
-        <span>{(file.size / 1024 / 1024).toFixed(2)} МБ</span>
+        <span>{(file.size / 1024 / 1024).toFixed(2)} MB</span>
         {onClear && (
           <button type="button" onClick={onClear}>
-            Убрать файл
+            Remove file
           </button>
         )}
       </div>
@@ -48,12 +48,12 @@ function FilePreview({ file, onClear }) {
 
 function MetadataList({ title, data }) {
   const labels = {
-    camera: "Камера",
-    capturedAt: "Дата съёмки",
-    software: "Программа",
-    author: "Автор",
-    description: "Описание",
-    location: "Геолокация",
+    camera: "Camera",
+    capturedAt: "Capture date",
+    software: "Software",
+    author: "Author",
+    description: "Description",
+    location: "Location",
   };
   const rows = Array.isArray(data?.fields)
     ? data.fields.map(({ key, label, value }) => [key, value, label])
@@ -65,7 +65,7 @@ function MetadataList({ title, data }) {
     <div className="metadataList">
       <h3>{title}</h3>
       {Number.isInteger(data?.fieldCount) && (
-        <span className="metadataCount">Полезных полей: {data.fieldCount}</span>
+        <span className="metadataCount">Useful fields: {data.fieldCount}</span>
       )}
       {rows.length ? (
         rows.map(([key, value, label]) => (
@@ -75,7 +75,7 @@ function MetadataList({ title, data }) {
           </p>
         ))
       ) : (
-        <p className="hint">Подходящих тегов не найдено.</p>
+        <p className="hint">No compatible tags found.</p>
       )}
     </div>
   );
@@ -88,16 +88,16 @@ function MediaReport({ report }) {
       <div>
         <span>C2PA / Content Credentials</span>
         <strong>
-          {report.before.hasC2pa ? "Было" : "Не найдено"} →{" "}
-          {report.after.hasC2pa ? "Осталось" : "Удалено / отсутствует"}
+          {report.before.hasC2pa ? "Present" : "Not found"} →{" "}
+          {report.after.hasC2pa ? "Still present" : "Removed / absent"}
         </strong>
       </div>
       {report.kind !== "image" && (
         <div>
-          <span>Аудиодорожка</span>
+          <span>Audio track</span>
           <strong>
-            {report.before.hasAudio ? "Была" : "Не было"} →{" "}
-            {report.after.hasAudio ? "Сохранена" : "Отсутствует"}
+            {report.before.hasAudio ? "Present" : "Absent"} →{" "}
+            {report.after.hasAudio ? "Preserved" : "Absent"}
           </strong>
         </div>
       )}
@@ -146,22 +146,23 @@ export function Metadata() {
       <section>
         <div className="sectionTitle">
           <span className="eyebrow">EXIF / XMP / QUICKTIME</span>
-          <span>ЛОКАЛЬНО</span>
+          <span>LOCAL</span>
         </div>
-        <h1>Очистить или перенести метаданные.</h1>
+        <h1>Clean or transfer metadata.</h1>
         <p className="hint">
-          Очищайте EXIF и C2PA из видео и фотографий. Оригинал не меняется:
-          Studio создаёт отдельную копию. Эталон нужен только для переноса тегов.
+          Remove EXIF and C2PA from videos and photos. The original remains
+          unchanged: Studio creates a separate copy. A reference is needed only
+          when transferring tags.
         </p>
         <div className="metadataMode" aria-live="polite">
-          <span>{reference ? "Режим переноса" : "Режим очистки"}</span>
+          <span>{reference ? "Transfer mode" : "Cleanup mode"}</span>
           <strong>
-            {reference ? "Эталон будет использован" : "Эталон не требуется"}
+            {reference ? "Reference will be used" : "No reference required"}
           </strong>
         </div>
         <form onSubmit={submit}>
           <label className="metadataPicker">
-            1. Видео или изображение · до 50 МБ
+            1. Video or image · up to 50 MB
             <input
               type="file"
               accept="video/mp4,image/jpeg,image/png,image/webp,image/heic,image/avif,image/gif,image/tiff"
@@ -175,7 +176,7 @@ export function Metadata() {
           </label>
           <FilePreview file={generated} onClear={() => setGenerated(null)} />
           <label className="metadataPicker">
-            2. Эталон метаданных · необязательно
+            2. Metadata reference · optional
             <input
               type="file"
               accept="image/jpeg,image/png,image/webp,image/heic,image/avif,image/gif,image/tiff,video/mp4"
@@ -186,7 +187,7 @@ export function Metadata() {
           <FilePreview file={reference} onClear={() => setReference(null)} />
           {!reference && (
             <p className="optionalFileHint">
-              Пропустите это поле для простой очистки EXIF/C2PA.
+              Leave this empty for a basic EXIF/C2PA cleanup.
             </p>
           )}
           <div className="metadataOptions">
@@ -197,7 +198,7 @@ export function Metadata() {
                 onChange={(e) => setRemoveC2pa(e.target.checked)}
                 disabled={busy}
               />
-              Удалить C2PA / Content Credentials
+              Delete C2PA / Content Credentials
             </label>
             <label className="locationOption">
               <input
@@ -206,7 +207,7 @@ export function Metadata() {
                 onChange={(e) => setRemoveSound(e.target.checked)}
                 disabled={busy || !generatedIsVideo}
               />
-              Удалить аудиодорожку из видео
+              Remove the video's audio track
             </label>
             <label className="locationOption">
               <input
@@ -215,7 +216,7 @@ export function Metadata() {
                 onChange={(e) => setClearExisting(e.target.checked)}
                 disabled={busy}
               />
-              Удалить EXIF, служебные метаданные и маркеры генератора
+              Remove EXIF, service metadata, and generator markers
             </label>
             <label className="locationOption">
               <input
@@ -224,29 +225,29 @@ export function Metadata() {
                 onChange={(e) => setIncludeLocation(e.target.checked)}
                 disabled={busy || !reference}
               />
-              Копировать геолокацию GPS, если она есть
+              Copy GPS location when available
             </label>
           </div>
           <p className="hint">
             {reference
-              ? "Старые записываемые теги очищаются, затем переносятся совместимые поля эталона."
-              : "Будет создана очищенная копия без переноса чужих метаданных."}{" "}
-            Содержимое изображения и параметры медиапотока не перекодируются.
+              ? "Existing writable tags are cleared, then compatible reference fields are copied."
+              : "A cleaned copy will be created without importing metadata from another file."}{" "}
+            Image content and media stream settings are preserved without re-encoding.
           </p>
           <button className="primary" disabled={busy || !canProcess}>
             {busy
-              ? "Обрабатываем файл…"
+              ? "Processing file…"
               : reference
-                ? "Создать копию с метаданными"
-                : "Очистить EXIF и C2PA"}
+                ? "Create copy with metadata"
+                : "Clean EXIF and C2PA"}
           </button>
         </form>
         {error && <p className="error">{error}</p>}
       </section>
       <section>
         <div className="sectionTitle">
-          <span className="eyebrow">РЕЗУЛЬТАТ</span>
-          <span>{result ? "Готово" : "Ожидание"}</span>
+          <span className="eyebrow">RESULT</span>
+          <span>{result ? "Completed" : "Waiting"}</span>
         </div>
         {result ? (
           <>
@@ -254,7 +255,7 @@ export function Metadata() {
               <img
                 className="metadataResult"
                 src={result.previewUrl}
-                alt="Очищенное изображение"
+                alt="Cleaned image"
               />
             ) : (
               <video
@@ -266,32 +267,32 @@ export function Metadata() {
             <MediaReport report={result.mediaReport} />
             {result.sourceMetadata && result.sourceMetadata.fieldCount <= 1 && (
               <p className="metadataNotice">
-                В эталоне найдено только {result.sourceMetadata.fieldCount || 0}{" "}
-                полезных полей. Соцсети и мессенджеры часто удаляют данные
-                камеры; для полного переноса выберите оригинал с телефона или
-                камеры.
+                Only {result.sourceMetadata.fieldCount || 0} useful fields were
+                found in the reference. Social networks and messengers often
+                strip camera data; use the original file from the phone or
+                camera for a fuller transfer.
               </p>
             )}
             <div className="metadataCompare">
-              <MetadataList title="До очистки" data={result.previousMetadata} />
+              <MetadataList title="Before cleanup" data={result.previousMetadata} />
               {result.sourceMetadata && (
-                <MetadataList title="В эталоне" data={result.sourceMetadata} />
+                <MetadataList title="In reference" data={result.sourceMetadata} />
               )}
               <MetadataList
-                title={`В готовом ${result.ext?.toUpperCase() || "файле"}`}
+                title={`In output ${result.ext?.toUpperCase() || "file"}`}
                 data={result.outputMetadata}
               />
             </div>
             <a className="download metadataDownload" href={result.downloadUrl}>
-              Скачать обработанный {result.ext?.toUpperCase() || "файл"} ↓
+              Download processed {result.ext?.toUpperCase() || "file"} ↓
             </a>
           </>
         ) : (
           <div className="empty">
-            <h2>Здесь появится новая копия</h2>
+            <h2>The processed copy will appear here</h2>
             <p>
-              Добавьте MP4, JPEG, PNG, WebP, HEIC, AVIF, GIF или TIFF. Эталон
-              требуется только для переноса метаданных.
+              Add an MP4, JPEG, PNG, WebP, HEIC, AVIF, GIF, or TIFF file. A
+              reference is required only for metadata transfer.
             </p>
           </div>
         )}
